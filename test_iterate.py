@@ -40,6 +40,7 @@ with open(filepath) as csv_file:
 
 X = np.ndarray((n_nonzero,1))
 y = np.ndarray(n_nonzero)
+
 idata = 0
 for ii in range(len(X_data)):
     if X_data[ii] == 0 and y_data[ii] == 0:
@@ -47,6 +48,9 @@ for ii in range(len(X_data)):
     X[idata][0] = X_data[ii]
     y[idata] = y_data[ii] 
     idata += 1
+
+np.save('test_X_data.npy', X)
+np.save('test_y_data.npy', y)
 
 unused_X = []
 unused_y = []
@@ -98,6 +102,8 @@ for iteration in range(10):
 
     X = X[inlier_mask]
     y = y[inlier_mask]
+
+    print(len(X))
 
 X = np.ndarray((len(unused_X),1))
 y = np.ndarray(len(unused_y))
