@@ -1,14 +1,41 @@
 import numpy as np
 from sklearn import linear_model
 
-class ransac:
+#General TODO:
+"""
+  idea: use ransac to get several lines, identify and eliminate degenerate lines by slope
+        then for each point, assigin it to the line it is nearest
+
+  - should probably scale data somehow so that all events are fit in the same general x-y plane
+"""
+
+class ransacked_track:
     """
-    for pillaging events for tracks and other booty
+    2D track found while ransacing the event
+    """
+
+    def __init__(self, in_hits, slope, intercept):
+        self.hit_indecies = in_hits
+        self.slope = slope[0]
+        self.intercept = intercept
+
+    #TODO
+    """
+      -which plane it came from
+      -list of indecies for hits that belong to it
+      -score of some sort for how good of a track it is
+        - score of how well the linear fit is (r^2? something like that)
+    """
+
+class viking:
+    """
+    for pillaging events for tracks like clusters
     """
 
     def __init__(self):
         self.unused_hits = []
         self.n_ransacs = 0
+        self.ransacked_tracks = []
 
     def set_data(self):
         self.X_in = np.load("./test_X_data.npy")
@@ -33,16 +60,34 @@ class ransac:
         for xx in inlier_mask:
             if xx:
                 ninlier += 1
-        if (len(inlier_mask) - ninlier) < 4 or self.n_ransacs>10:
+        if (len(inlier_mask) - ninlier) < 5:
             #save track hypothesis
+            this_track = ransacked_track(self.hit_indecies, this_ransac.estimator_.coef_, 
+                    this_ransac.estimator_.intercept_)
+            self.ransacked_tracks.append(this_track)
+            #set start ransacking again with unused hits
+            self.X = np.ndarray((len(self.unused_hits),1))
+            self.y = np.ndarray(len(self.unused_hits))
+            self.hit_indecies = np.ndarray(len(self.unused_hits))
+            for ii in range(len(self.X)):
+                self.X[ii][0] = self.X_in[int(self.unused_hits[ii])][0]
+            for ii in range(len(self.y)):
+                self.y[ii] = self.y_in[int(self.unused_hits[ii])]
+            for ii in range(len(self.hit_indecies)):
+                self.hit_indecies[ii] = self.unused_hits[ii]
+            self.unused_hits = []
+
+        else:
+            for xx in self.hit_indecies[outlier_mask]:
+                self.unused_hits.append(xx)
+
+            self.X = self.X[inlier_mask]
+            self.y = self.y[inlier_mask]
+            self.hit_indecies = self.hit_indecies[inlier_mask]
+
+        if self.n_ransacs > 20 or len(self.X) < 5:
             return
 
-        for xx in self.hit_indecies[outlier_mask]:
-            self.unused_hits.append(xx)
-
-        self.X = self.X[inlier_mask]
-        self.y = self.y[inlier_mask]
-        self.hit_indecies = self.hit_indecies[inlier_mask]
         self.ransack()
 
     #TODO
@@ -53,19 +98,6 @@ class ransac:
       -method to get tracks
       -method to compare tracks in different planes for the end result of assigning hits to particle objects
       -ransac function that will iteratively find all track hypotheses in a specifed plane
-    """
-
-#class ransaced_track:
-    """
-    2D track found while ransacing the event
-    """
-
-    #TODO
-    """
-      -which plane it came from
-      -list of indecies for hits that belong to it
-      -score of some sort for how good of a track it is
-        - score of how well the linear fit is (r^2? something like that)
     """
 
 #class hit:
