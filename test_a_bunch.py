@@ -6,15 +6,18 @@ import ransac
 #TODO:
 """
   - grab z-data simultatneously below, then do all three ransacks
+  - does ransac work out of the box in 3-D?
 """
 
 filepath = "./csv/train_0004.csv"
 
-X_data = []
+x_data = []
 y_data = []
+z_data = []
 with open(filepath) as csv_file:
     csv_reader = csv.reader(csv_file, delimiter=',')
     line_count = 0
+    n_true_protons = 0
     for row in csv_reader:
         used_row = True
         for ii, xx in enumerate(row):
@@ -24,33 +27,28 @@ with open(filepath) as csv_file:
                     break
                 else:
                     print("event:", line_count, "has", xx, "true protons in it.")
-            if ((ii-1)%4) == 1:
-                X_data.append(float(xx))
-            elif ((ii-1)%4) == 2:
+                    n_true_protons = xx
+            if ((ii-1)%4) == 0:
+                x_data.append(float(xx))
+            elif ((ii-1)%4) == 1:
                 y_data.append(float(xx))
-        if used_row:
-            n_nonzero = 0
-            for ii in range(len(X_data)):
-                if X_data[ii] == 0 and y_data[ii] == 0:
-                    continue
-                n_nonzero += 1
-        else:
+            elif ((ii-1)%4) == 2:
+                z_data.append(float(xx))
+        if not used_row:
             continue
 
-        X = np.ndarray((n_nonzero,1))
-        y = np.ndarray(n_nonzero)
-        idata = 0
-        for ii in range(len(X_data)):
-            if X_data[ii] == 0 and y_data[ii] == 0:
-                continue 
-            X[idata][0] = X_data[ii]
-            y[idata] = y_data[ii] 
-            idata += 1
-
+        x = []
+        y = []
+        z = []
+        for ii in range(len(x_data)):
+            if not (x_data[ii] == 0 and y_data[ii] == 0 and z_data[ii] == 0):
+                x.append(x_data[ii])
+                y.append(y_data[ii])
+                z.append(z_data[ii])
 
         viking = ransac.viking()
 
-        viking.set_data(X,y)
+        viking.set_data(x,y)
 
         viking.ransack()
 
@@ -81,11 +79,13 @@ with open(filepath) as csv_file:
             plt.plot([x_draw.min(), x_draw.max()], [a*x_draw.min()+b, a*x_draw.max()+b], color=colors[itrack%7])
         plt.xlabel("X")
         plt.ylabel("Y")
+        plt_title_str = str(n_true_protons) + " true protons"
+        plt.title(plt_title_str)
         print_string = "./png/RANSAC_test_" + str(line_count) + ".png"
         plt.savefig(print_string)
         plt.close('all')
 
-        X_data.clear()
+        x_data.clear()
         y_data.clear()
         line_count += 1
 

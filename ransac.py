@@ -16,19 +16,10 @@ class ransacked_track:
     """
     2D track found while ransacing the event
     """
-
     def __init__(self, in_hits, slope, intercept):
         self.hit_indecies = in_hits
         self.slope = slope[0]
         self.intercept = intercept
-
-    #TODO
-    """
-      -which plane it came from
-      -list of indecies for hits that belong to it
-      -score of some sort for how good of a track it is
-        - score of how well the linear fit is (r^2? something like that)
-    """
 
 class viking:
     """
@@ -41,10 +32,12 @@ class viking:
         self.ransacked_tracks = []
 
     def set_data(self, X_in, y_in):
-        #self.X_in = np.load("./test_X_data.npy")
-        #self.y_in = np.load("./test_y_data.npy")
-        self.X_in = X_in
-        self.y_in = y_in
+        self.X_in = np.ndarray((len(X_in),1))
+        self.y_in = np.ndarray(len(y_in))
+        for ii, xx in enumerate(X_in):
+            self.X_in[ii][0] = xx
+        for ii, xx in enumerate(y_in):
+            self.y_in[ii] = xx
         self.hit_indecies_in = np.ndarray(len(self.X_in))
         for ii in range(len(self.hit_indecies_in)):
             self.hit_indecies_in[ii] = ii
@@ -57,7 +50,7 @@ class viking:
             self.hit_indecies = self.hit_indecies_in
         self.n_ransacs += 1
 
-        this_ransac = linear_model.RANSACRegressor(residual_threshold=3.)
+        this_ransac = linear_model.RANSACRegressor(residual_threshold=2.)
         this_ransac.fit(self.X, self.y)
         inlier_mask = this_ransac.inlier_mask_
         outlier_mask = np.logical_not(inlier_mask)
