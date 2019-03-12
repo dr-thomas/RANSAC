@@ -7,6 +7,9 @@ from sklearn import linear_model
         then for each point, assigin it to the line it is nearest
 
   - should probably scale data somehow so that all events are fit in the same general x-y plane
+
+  - far out (.. man .. ) idea: could supervise this algorithm to try to convince it more judiciously split
+    hits near intersections amoung lines maybe?  would need custom implementation obviously
 """
 
 class ransacked_track:
@@ -37,9 +40,11 @@ class viking:
         self.n_ransacs = 0
         self.ransacked_tracks = []
 
-    def set_data(self):
-        self.X_in = np.load("./test_X_data.npy")
-        self.y_in = np.load("./test_y_data.npy")
+    def set_data(self, X_in, y_in):
+        #self.X_in = np.load("./test_X_data.npy")
+        #self.y_in = np.load("./test_y_data.npy")
+        self.X_in = X_in
+        self.y_in = y_in
         self.hit_indecies_in = np.ndarray(len(self.X_in))
         for ii in range(len(self.hit_indecies_in)):
             self.hit_indecies_in[ii] = ii
@@ -52,7 +57,7 @@ class viking:
             self.hit_indecies = self.hit_indecies_in
         self.n_ransacs += 1
 
-        this_ransac = linear_model.RANSACRegressor()
+        this_ransac = linear_model.RANSACRegressor(residual_threshold=3.)
         this_ransac.fit(self.X, self.y)
         inlier_mask = this_ransac.inlier_mask_
         outlier_mask = np.logical_not(inlier_mask)
@@ -60,7 +65,7 @@ class viking:
         for xx in inlier_mask:
             if xx:
                 ninlier += 1
-        if (len(inlier_mask) - ninlier) < 5:
+        if (len(inlier_mask) - ninlier) < 2:
             #save track hypothesis
             this_track = ransacked_track(self.hit_indecies, this_ransac.estimator_.coef_, 
                     this_ransac.estimator_.intercept_)
@@ -85,7 +90,7 @@ class viking:
             self.y = self.y[inlier_mask]
             self.hit_indecies = self.hit_indecies[inlier_mask]
 
-        if self.n_ransacs > 20 or len(self.X) < 5:
+        if self.n_ransacs > 100 or len(self.X) < 5:
             return
 
         self.ransack()
