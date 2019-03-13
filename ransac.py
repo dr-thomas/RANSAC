@@ -27,6 +27,10 @@ class ransacked_track:
     """
     2D track found while ransacing the event
     """
+    #TODO:
+    """
+    change hit indecies to a hit mask relative to the original indecies?
+    """
     def __init__(self, in_hits, slope, intercept):
         self.hit_indecies = []
         for xx in in_hits:
@@ -142,7 +146,7 @@ class viking:
     def get_tracks(self):
         return self.ransacked_tracks
 
-    def get_cleaned_tracks(self):
+    def clean_tracks(self):
         def cos(track1, track2):
             a1 = track1.slope
             a2 = track2.slope
@@ -171,5 +175,25 @@ class viking:
                     this_track.add_track(that_track)
                     used_tracks.append(jj)
             out_tracks.append(this_track)
-        return out_tracks
+        self.ransacked_tracks = out_tracks
+
+    def get_distances(self):
+        out  = []
+        for track in self.ransacked_tracks:
+            track_distances = []
+            for ii in range(len(self.X_in)):
+                x = self.X_in[ii][0]
+                y = self.y_in[ii]
+                #track_distances.append(track.slope*x+track.intercept-y)
+                # not great, this will cause many clusters along a line, try something else 
+                if abs(track.slope*x+track.intercept-y) > 5.:
+                    track_distances.append(0)
+                else:
+                    track_distances.append(1)
+
+            out.append(track_distances)
+        return out
+
+    #TODO: method that grows cleaned tracks to include all closest points
+    #def grow_tracks(self):
 
