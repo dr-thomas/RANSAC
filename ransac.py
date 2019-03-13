@@ -7,11 +7,12 @@ import math
   idea: use ransac to get several lines, identify and eliminate degenerate lines by slope
         then for each point, assigin it to the line it is nearest
   Track cleaning considerations:
-     - parralell tracks
+     - parralell tracks  -> done
      - individal tracks that have clusters separated by large distance
      - tracks that have conflicting intersections relative to agreed on vertex by other tracks???
 
   - should probably scale data somehow so that all events are fit in the same general x-y plane
+     -> done
 
   - far out (.. man .. ) idea: could supervise this algorithm to try to convince it more judiciously split
     hits near intersections amoung lines maybe?  would need custom implementation obviously
@@ -171,8 +172,4 @@ class viking:
                     used_tracks.append(jj)
             out_tracks.append(this_track)
         return out_tracks
-
-
-
-
 
