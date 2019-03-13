@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 import csv
 import ransac
 
-def draw_ransack(viking):
+def draw_ransack(viking, clean):
 
     unused_hits = viking.get_unused_hits()
     x_draw = np.ndarray(len(unused_hits))
@@ -15,7 +15,11 @@ def draw_ransack(viking):
     plt.scatter(x_draw, y_draw, color='k', marker='.')
 
     colors = ['r', 'g', 'b', 'c', 'm', 'y']
-    for itrack, track in enumerate(viking.get_cleaned_tracks()):
+    if clean:
+        tracks = viking.get_cleaned_tracks()
+    else:
+        tracks = viking.get_tracks()
+    for itrack, track in enumerate(tracks):
         x_draw = np.ndarray(len(track.hit_indecies))
         y_draw = np.ndarray(len(track.hit_indecies))
 
@@ -61,33 +65,49 @@ with open(filepath) as csv_file:
         if len(x) < 5:
             continue
 
-        plt.figure(figsize=(15,5))
+        print("on event:", line_count)
+        plt.figure(figsize=(15,10))
 
         viking = ransac.viking()
         viking.set_data(x,y)
+        viking.scale_data()
         viking.ransack()
-        plt.subplot(131)
+        plt.subplot(231)
         plt.xlabel("X")
         plt.ylabel("Y")
-        draw_ransack(viking)
+        draw_ransack(viking,False)
+        plt.subplot(234)
+        plt.xlabel("X")
+        plt.ylabel("Y")
+        draw_ransack(viking,True)
 
         viking = ransac.viking()
         viking.set_data(x,z)
+        viking.scale_data()
         viking.ransack()
-        plt.subplot(132)
+        plt.subplot(232)
         plt_title_str = str(n_true_protons) + " true protons"
         plt.title(plt_title_str)
         plt.xlabel("X")
         plt.ylabel("Z")
-        draw_ransack(viking)
+        draw_ransack(viking,False)
+        plt.subplot(235)
+        plt.xlabel("X")
+        plt.ylabel("Z")
+        draw_ransack(viking,True)
 
         viking = ransac.viking()
         viking.set_data(y,z)
+        viking.scale_data()
         viking.ransack()
-        plt.subplot(133)
+        plt.subplot(233)
         plt.xlabel("Y")
         plt.ylabel("Z")
-        draw_ransack(viking)
+        draw_ransack(viking,False)
+        plt.subplot(236)
+        plt.xlabel("Y")
+        plt.ylabel("Z")
+        draw_ransack(viking,True)
 
         plt.tight_layout()
 

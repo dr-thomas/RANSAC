@@ -62,6 +62,20 @@ class viking:
         for ii in range(len(self.hit_indecies_in)):
             self.hit_indecies_in[ii] = ii
 
+    def scale_data(self):
+        x_min = 555e10
+        for xx in self.X_in:
+            if xx[0] < x_min:
+                x_min = xx[0]
+        y_min = 555e10
+        for xx in self.y_in:
+            if xx < y_min:
+                y_min = xx
+        for ii in range(len(self.X_in)):
+            self.X_in[ii][0] = self.X_in[ii][0] - x_min
+        for ii in range(len(self.y_in)):
+            self.y_in[ii] = self.y_in[ii] - y_min
+
     def ransack(self):
         if self.n_ransacs == 0:
             self.X = self.X_in
@@ -152,7 +166,7 @@ class viking:
                         break
                 if is_used:
                     continue
-                if cos(tracks[ii], tracks[jj]) > 0.9:
+                if abs(cos(tracks[ii], tracks[jj])) > 0.95:
                     this_track.add_track(that_track)
                     used_tracks.append(jj)
             out_tracks.append(this_track)
