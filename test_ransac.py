@@ -49,6 +49,8 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
        that on these features
          -> might not need grow_tracks method wiht this idea
          -> also might not need to clean tracks
+
+         -> this is not working so well
     """
 
     cluster_X = np.ndarray((len(x),len(vikings)))
