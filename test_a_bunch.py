@@ -21,7 +21,6 @@ def draw_ransack(viking):
         b = viking.ransacked_tracks[itrack].intercept
         plt.plot([x_draw.min(), x_draw.max()], [a*x_draw.min()+b, a*x_draw.max()+b], color=colors[itrack%7])
 
-
 filepath = "./csv/train_0007.csv"
 
 x_data = []
@@ -32,23 +31,15 @@ with open(filepath) as csv_file:
     line_count = 0
     n_true_protons = 0
     for row in csv_reader:
-        used_row = True
         for ii, xx in enumerate(row):
             if ii == 0:
-                if int(xx) < 2:
-                    used_row = False
-                    break
-                else:
-                    print("event:", line_count, "has", xx, "true protons in it.")
-                    n_true_protons = xx
-            if ((ii-1)%4) == 0:
+                n_true_protons = xx
+            elif ((ii-1)%4) == 0:
                 x_data.append(float(xx))
             elif ((ii-1)%4) == 1:
                 y_data.append(float(xx))
             elif ((ii-1)%4) == 2:
                 z_data.append(float(xx))
-        if not used_row:
-            continue
 
         x = []
         y = []
