@@ -98,5 +98,22 @@ class viking:
 
         self.ransack()
 
+    def get_unused_hits(self):
+        self.unused_hits = [ii for ii in range(len(self.X_in))]
+        for track in self.ransacked_tracks:
+            for hit in track.hit_indecies:
+                idel = -1
+                for iuhit, uhit in enumerate(self.unused_hits):
+                    if uhit == hit:
+                        idel = iuhit
+                        break
+                if idel >= 0:
+                    del self.unused_hits[idel]
+        return self.unused_hits
+
     def get_tracks(self):
         return self.ransacked_tracks
+
+
+
+

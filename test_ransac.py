@@ -4,21 +4,29 @@ import csv
 import ransac
 
 def draw_ransack(viking):
-    n_ransacked_tracks = len(viking.ransacked_tracks)
-    #draw first 7 ransacked tracks
-    colors = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
-    for itrack in range(n_ransacked_tracks):
-        x_draw = np.ndarray(len(viking.ransacked_tracks[itrack].hit_indecies))
-        y_draw = np.ndarray(len(viking.ransacked_tracks[itrack].hit_indecies))
+
+    unused_hits = viking.get_unused_hits()
+    x_draw = np.ndarray(len(unused_hits))
+    y_draw = np.ndarray(len(unused_hits))
+    for ii in range(len(x_draw)):
+        x_draw[ii] = viking.X_in[int(unused_hits[ii])][0]
+    for ii in range(len(y_draw)):
+        y_draw[ii] = viking.y_in[int(unused_hits[ii])]
+    plt.scatter(x_draw, y_draw, color='k', marker='.')
+
+    colors = ['r', 'g', 'b', 'c', 'm', 'y']
+    for itrack, track in enumerate(viking.get_tracks()):
+        x_draw = np.ndarray(len(track.hit_indecies))
+        y_draw = np.ndarray(len(track.hit_indecies))
 
         for ii in range(len(x_draw)):
-            x_draw[ii] = viking.X_in[int(viking.ransacked_tracks[itrack].hit_indecies[ii])][0]
+            x_draw[ii] = viking.X_in[int(track.hit_indecies[ii])][0]
         for ii in range(len(y_draw)):
-            y_draw[ii] = viking.y_in[int(viking.ransacked_tracks[itrack].hit_indecies[ii])]
+            y_draw[ii] = viking.y_in[int(track.hit_indecies[ii])]
 
-        plt.scatter(x_draw, y_draw, color=colors[itrack%7], marker='.')
-        a = viking.ransacked_tracks[itrack].slope
-        b = viking.ransacked_tracks[itrack].intercept
+        plt.scatter(x_draw, y_draw, color=colors[itrack%6], marker='.')
+        a = track.slope
+        b = track.intercept
         plt.plot([x_draw.min(), x_draw.max()], [a*x_draw.min()+b, a*x_draw.max()+b], color=colors[itrack%7])
 
 filepath = "./csv/train_0007.csv"
