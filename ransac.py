@@ -5,11 +5,18 @@ from sklearn import linear_model
 """
   idea: use ransac to get several lines, identify and eliminate degenerate lines by slope
         then for each point, assigin it to the line it is nearest
+  Track cleaning considerations:
+     - parralell tracks
+     - individal tracks that have clusters separated by large distance
+     - tracks that have conflicting intersections relative to agreed on vertex by other tracks???
 
   - should probably scale data somehow so that all events are fit in the same general x-y plane
 
   - far out (.. man .. ) idea: could supervise this algorithm to try to convince it more judiciously split
     hits near intersections amoung lines maybe?  would need custom implementation obviously
+
+  - does ransac work out of the box in 3-D?
+
 """
 
 class ransacked_track:
@@ -44,21 +51,24 @@ class viking:
 
     def ransack(self):
         if self.n_ransacs == 0:
-            #initialize data here, TODO: might need to modify this to ransac unused hits after first pass...
             self.X = self.X_in
             self.y = self.y_in
             self.hit_indecies = self.hit_indecies_in
         self.n_ransacs += 1
 
-        this_ransac = linear_model.RANSACRegressor(residual_threshold=2.)
-        this_ransac.fit(self.X, self.y)
+        #this_ransac = linear_model.RANSACRegressor(residual_threshold=2., stop_probability=0.99)
+        this_ransac = linear_model.RANSACRegressor(stop_probability=0.99)
+        try:
+            this_ransac.fit(self.X, self.y)
+        except:
+            return
         inlier_mask = this_ransac.inlier_mask_
         outlier_mask = np.logical_not(inlier_mask)
         ninlier = 0
         for xx in inlier_mask:
             if xx:
                 ninlier += 1
-        if (len(inlier_mask) - ninlier) < 2:
+        if (len(inlier_mask) - ninlier) < 1:
             #save track hypothesis
             this_track = ransacked_track(self.hit_indecies, this_ransac.estimator_.coef_, 
                     this_ransac.estimator_.intercept_)
@@ -88,19 +98,5 @@ class viking:
 
         self.ransack()
 
-    #TODO
-    """
-      -list of tracks
-      -list of hits in the event with indecies
-      -method to set hits
-      -method to get tracks
-      -method to compare tracks in different planes for the end result of assigning hits to particle objects
-      -ransac function that will iteratively find all track hypotheses in a specifed plane
-    """
-
-#class hit:
-
-    #TODO
-    """
-      -x, y, z, sig, etc
-    """
+    def get_tracks(self):
+        return self.ransacked_tracks
