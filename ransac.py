@@ -194,6 +194,21 @@ class viking:
             out.append(track_distances)
         return out
 
+    def get_track_indecies(self):
+        out = []
+        for ii in range(len(self.X_in)):
+            x = self.X_in[ii][0]
+            y = self.y_in[ii] 
+            min_dist = 555e10
+            min_index = -1
+            for ii, xx in enumerate(self.ransacked_tracks):
+                dist = abs(xx.slope*x+xx.intercept-y)
+                if dist < min_dist:
+                    min_dist = dist
+                    min_index = ii
+            out.append(min_index)
+        return out
+
     #TODO: method that grows cleaned tracks to include all closest points
     #def grow_tracks(self):
 

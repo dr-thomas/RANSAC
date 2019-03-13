@@ -50,6 +50,15 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
          -> might not need grow_tracks method wiht this idea
          -> also might not need to clean tracks
     """
+
+    cluster_X = np.ndarray((len(x),len(vikings)))
+
+    for ii, viking in enumerate(vikings):
+        track_indecies = viking.get_track_indecies()
+        for jj, index in enumerate(track_indecies):
+            cluster_X[jj][ii] = index
+
+    """
     cluster_X_t = []
     for viking in vikings:
         track_distances = viking.get_distances()
@@ -64,7 +73,10 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
         for jj in range(len(cluster_X_t[ii])):
             cluster_X[jj][ii] = cluster_X_t[ii][jj]
 
-    db = DBSCAN(eps=0.1, min_samples=2, metric='cosine').fit(cluster_X)
+    db = DBSCAN(eps=0.15, min_samples=2, metric='cosine').fit(cluster_X)
+    """
+
+    db = DBSCAN(eps=0.15, min_samples=2).fit(cluster_X)
 
     n_clusters = -1
     for xx in db.labels_:
