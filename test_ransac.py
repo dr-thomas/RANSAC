@@ -15,7 +15,7 @@ def draw_ransack(viking):
     plt.scatter(x_draw, y_draw, color='k', marker='.')
 
     colors = ['r', 'g', 'b', 'c', 'm', 'y']
-    for itrack, track in enumerate(viking.get_tracks()):
+    for itrack, track in enumerate(viking.get_cleaned_tracks()):
         x_draw = np.ndarray(len(track.hit_indecies))
         y_draw = np.ndarray(len(track.hit_indecies))
 
@@ -27,7 +27,7 @@ def draw_ransack(viking):
         plt.scatter(x_draw, y_draw, color=colors[itrack%6], marker='.')
         a = track.slope
         b = track.intercept
-        plt.plot([x_draw.min(), x_draw.max()], [a*x_draw.min()+b, a*x_draw.max()+b], color=colors[itrack%7])
+        plt.plot([x_draw.min(), x_draw.max()], [a*x_draw.min()+b, a*x_draw.max()+b], color=colors[itrack%6])
 
 filepath = "./csv/train_0007.csv"
 

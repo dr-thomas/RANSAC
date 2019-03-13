@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn import linear_model
+import math
 
 #General TODO:
 """
@@ -17,6 +18,8 @@ from sklearn import linear_model
 
   - does ransac work out of the box in 3-D?
 
+  - should optimize arrays and things for computational eff
+
 """
 
 class ransacked_track:
@@ -24,9 +27,19 @@ class ransacked_track:
     2D track found while ransacing the event
     """
     def __init__(self, in_hits, slope, intercept):
-        self.hit_indecies = in_hits
+        self.hit_indecies = []
+        for xx in in_hits:
+            self.hit_indecies.append(xx)
         self.slope = slope[0]
         self.intercept = intercept
+        self.compare_n_hits = len(self.hit_indecies)
+    def add_track(self, in_track):
+        if in_track.compare_n_hits > self.compare_n_hits:
+            self.slope = in_track.slope
+            self.intercept = in_track.intercept
+            self.compare_n_hits = in_track.compare_n_hits
+        for xx in in_track.hit_indecies:
+            self.hit_indecies.append(xx)
 
 class viking:
     """
@@ -57,7 +70,7 @@ class viking:
         self.n_ransacs += 1
 
         #this_ransac = linear_model.RANSACRegressor(residual_threshold=2., stop_probability=0.99)
-        this_ransac = linear_model.RANSACRegressor(stop_probability=0.99)
+        this_ransac = linear_model.RANSACRegressor(stop_probability=0.9)
         try:
             this_ransac.fit(self.X, self.y)
         except:
@@ -113,6 +126,38 @@ class viking:
 
     def get_tracks(self):
         return self.ransacked_tracks
+
+    def get_cleaned_tracks(self):
+        def cos(track1, track2):
+            a1 = track1.slope
+            a2 = track2.slope
+            return (1+a1*a2)/(math.sqrt(1+a1*a1)*math.sqrt(1+a2*a2))
+        out_tracks = []
+        used_tracks = []
+        tracks = self.get_tracks()
+        for ii, this_track in enumerate(self.get_tracks()):
+            is_used = False 
+            for xx in used_tracks:
+                if ii == int(xx):
+                    is_used = True
+                    break
+            if is_used:
+                continue
+            used_tracks.append(ii)
+            for jj, that_track in enumerate(self.get_tracks()):
+                is_used = False 
+                for xx in used_tracks:
+                    if jj == int(xx):
+                        is_used = True
+                        break
+                if is_used:
+                    continue
+                if cos(tracks[ii], tracks[jj]) > 0.9:
+                    this_track.add_track(that_track)
+                    used_tracks.append(jj)
+            out_tracks.append(this_track)
+        return out_tracks
+
 
 
 
