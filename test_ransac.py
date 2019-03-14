@@ -86,21 +86,44 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
 
     hc_clusters = []
     for ii in range(len(clusters)):
-        if clusters_count[ii] >= 5:
+        if clusters_count[ii] >= 10:
             hc_clusters.append(clusters[ii])
 
 
     evt_labels = []
     for xx in cluster_X:
         cluster = 10000*xx[0] + 100*xx[1] + xx[2]
-        for ii, cc in enumerate(clusters):
+        was_hc = False
+        for ii, cc in enumerate(hc_clusters):
             if cluster == cc:
-                #if clusters_count[ii] < 5:
-                    #evt_labels.append(-1)
-                #else:
-                    #evt_labels.append(ii)
                 evt_labels.append(ii)
+                was_hc = True
                 break
+        if not was_hc:
+            evt_labels.append(-1)
+
+    are_unused = True
+    attempts = 0
+    while are_unused and attempts < 100:
+        attempts += 1
+        are_unused = False
+        for xx in evt_labels:
+            if xx == -1:
+                are_unused = True
+                break
+        if not are_unused:
+            break
+        for ii, xx in enumerate(evt_labels):
+            if xx == -1:
+                min_dist = 555e10
+                for jj in range(len(x)):
+                    dist = (x[ii]-x[jj])*(x[ii]-x[jj])
+                    dist += (y[ii]-y[jj])*(y[ii]-y[jj])
+                    dist += (z[ii]-z[jj])*(z[ii]-z[jj])
+                    if dist < min_dist:
+                        min_dist = dist
+                        evt_labels[ii] = evt_labels[jj]
+                
 
     n_clusters = -1
     for xx in evt_labels:
@@ -108,28 +131,22 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
             n_clusters = xx
     n_clusters += 1
 
-    colors = ['r', 'g', 'b', 'c', 'm', 'y']
+    colors = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
 
     plt.subplot(337)
     for ii in range(len(x)):
         cluster = evt_labels[ii]
-        if cluster == -1:
-            continue
-        plt.scatter(x[ii], y[ii], color=colors[cluster%6], marker='.')
+        plt.scatter(x[ii], y[ii], color=colors[cluster%7], marker='.')
     plt.subplot(338)
     plt_title_str = str(n_clusters) + " clusters"
     plt.title(plt_title_str)
     for ii in range(len(x)):
         cluster = evt_labels[ii]
-        if cluster == -1:
-            continue
-        plt.scatter(z[ii], x[ii], color=colors[cluster%6], marker='.')
+        plt.scatter(z[ii], x[ii], color=colors[cluster%7], marker='.')
     plt.subplot(339)
     for ii in range(len(x)):
         cluster = evt_labels[ii]
-        if cluster == -1:
-            continue
-        plt.scatter(y[ii], z[ii], color=colors[cluster%6], marker='.')
+        plt.scatter(y[ii], z[ii], color=colors[cluster%7], marker='.')
 
 """
     print_string = "./png/DBSCAN_test_" + str(line_count) + ".png"
