@@ -113,7 +113,7 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
         cluster = evt_labels[ii]
         if cluster == -1:
             continue
-        plt.scatter(x[ii], z[ii], color=colors[cluster%6], marker='.')
+        plt.scatter(z[ii], x[ii], color=colors[cluster%6], marker='.')
     plt.subplot(339)
     for ii in range(len(x)):
         cluster = evt_labels[ii]
@@ -182,18 +182,18 @@ with open(filepath) as csv_file:
         vikings.append(viking)
 
         viking = ransac.viking()
-        viking.set_data(x,z)
+        viking.set_data(z,x)
         viking.scale_data()
         viking.ransack()
         plt.subplot(332)
         plt_title_str = str(n_true_protons) + " true protons"
         plt.title(plt_title_str)
-        plt.xlabel("X")
-        plt.ylabel("Z")
+        plt.xlabel("Z")
+        plt.ylabel("X")
         draw_ransack(viking,False, False)
         plt.subplot(335)
-        plt.xlabel("X")
-        plt.ylabel("Z")
+        plt.xlabel("Z")
+        plt.ylabel("X")
         draw_ransack(viking,True, True)
 
 
