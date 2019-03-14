@@ -25,7 +25,7 @@ import math
 
 class ransacked_track:
     """
-    2D track found while ransacing the event
+    3D track found while ransacing the event
     """
     #TODO:
     """
@@ -33,9 +33,11 @@ class ransacked_track:
     """
     def __init__(self, in_hits, slope, intercept):
         self.hit_indecies = []
+        self.slope = [0,0]
         for xx in in_hits:
             self.hit_indecies.append(xx)
-        self.slope = slope[0]
+        self.slope[0] = slope[0]
+        self.slope[1] = slope[1]
         self.intercept = intercept
         self.compare_n_hits = len(self.hit_indecies)
     def add_track(self, in_track):
@@ -58,12 +60,14 @@ class viking:
         self.n_ransacs = 0
         self.ransacked_tracks = []
 
-    def set_data(self, X_in, y_in):
-        self.X_in = np.ndarray((len(X_in),1))
-        self.y_in = np.ndarray(len(y_in))
-        for ii, xx in enumerate(X_in):
+    def set_data(self, x_in, y_in, z_in):
+        self.X_in = np.ndarray((len(x_in),2))
+        self.y_in = np.ndarray(len(z_in))
+        for ii, xx in enumerate(x_in):
             self.X_in[ii][0] = xx
         for ii, xx in enumerate(y_in):
+            self.X_in[ii][1] = xx
+        for ii, xx in enumerate(z_in):
             self.y_in[ii] = xx
         self.hit_indecies_in = np.ndarray(len(self.X_in))
         for ii in range(len(self.hit_indecies_in)):
@@ -71,17 +75,23 @@ class viking:
 
     def scale_data(self):
         x_min = 555e10
+        y_min = 555e10
         for xx in self.X_in:
             if xx[0] < x_min:
                 x_min = xx[0]
-        y_min = 555e10
+            if xx[1] < y_min:
+                y_min = xx[1]
+        z_min = 555e10
         for xx in self.y_in:
             if xx < y_min:
-                y_min = xx
+                z_min = xx
+
         for ii in range(len(self.X_in)):
             self.X_in[ii][0] = self.X_in[ii][0] - x_min
+            self.X_in[ii][1] = self.X_in[ii][1] - y_min
+
         for ii in range(len(self.y_in)):
-            self.y_in[ii] = self.y_in[ii] - y_min
+            self.y_in[ii] = self.y_in[ii] - z_min
 
     def ransack(self):
         if self.n_ransacs == 0:
@@ -91,7 +101,7 @@ class viking:
         self.n_ransacs += 1
 
         #this_ransac = linear_model.RANSACRegressor(residual_threshold=2., stop_probability=0.99)
-        this_ransac = linear_model.RANSACRegressor(stop_probability=0.95)
+        this_ransac = linear_model.RANSACRegressor(residual_threshold=1., stop_probability=0.95)
         try:
             this_ransac.fit(self.X, self.y)
         except:
@@ -108,11 +118,12 @@ class viking:
                     this_ransac.estimator_.intercept_)
             self.ransacked_tracks.append(this_track)
             #set start ransacking again with unused hits
-            self.X = np.ndarray((len(self.unused_hits),1))
+            self.X = np.ndarray((len(self.unused_hits),2))
             self.y = np.ndarray(len(self.unused_hits))
             self.hit_indecies = np.ndarray(len(self.unused_hits))
             for ii in range(len(self.X)):
                 self.X[ii][0] = self.X_in[int(self.unused_hits[ii])][0]
+                self.X[ii][1] = self.X_in[int(self.unused_hits[ii])][1]
             for ii in range(len(self.y)):
                 self.y[ii] = self.y_in[int(self.unused_hits[ii])]
             for ii in range(len(self.hit_indecies)):
@@ -127,7 +138,7 @@ class viking:
             self.y = self.y[inlier_mask]
             self.hit_indecies = self.hit_indecies[inlier_mask]
 
-        if self.n_ransacs > 100 or len(self.X) < 5:
+        if self.n_ransacs > 10000 or len(self.X) < 5:
             return
 
         self.ransack()
@@ -227,7 +238,9 @@ class viking:
             min_index = -1
             evt_dist = [min_index, min_dist]
             for ii, xx in enumerate(self.ransacked_tracks):
-                dist = abs(xx.slope*x+xx.intercept-y)
+                a = xx.slope
+                b = xx.intercept
+                dist = abs(a*x-y+b)/(math.sqrt(a*a+1))
                 if dist < min_dist:
                     min_dist = dist
                     min_index = ii
