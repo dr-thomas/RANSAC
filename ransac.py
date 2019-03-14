@@ -227,7 +227,9 @@ class viking:
             min_index = -1
             evt_dist = [min_index, min_dist]
             for ii, xx in enumerate(self.ransacked_tracks):
-                dist = abs(xx.slope*x+xx.intercept-y)
+                a = xx.slope
+                b = xx.intercept
+                dist = abs(a*x-y+b)/(math.sqrt(a*a+1))
                 if dist < min_dist:
                     min_dist = dist
                     min_index = ii
