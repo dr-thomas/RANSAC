@@ -5,7 +5,7 @@ import ransac
 from sklearn.cluster import DBSCAN
 from sklearn import metrics
 
-def draw_ransack(viking, clean):
+def draw_ransack(viking, clean, grow):
 
     unused_hits = viking.get_unused_hits()
     x_draw = np.ndarray(len(unused_hits))
@@ -17,8 +17,10 @@ def draw_ransack(viking, clean):
     plt.scatter(x_draw, y_draw, color='k', marker='.')
 
     colors = ['r', 'g', 'b', 'c', 'm', 'y']
-    if clean:
+    if clean and not grow:
         viking.clean_tracks()
+    if grow and clean:
+        viking.grow_tracks()
     for itrack, track in enumerate(viking.get_tracks()):
         x_draw = np.ndarray(len(track.hit_indecies))
         y_draw = np.ndarray(len(track.hit_indecies))
@@ -154,11 +156,16 @@ with open(filepath) as csv_file:
         plt.subplot(331)
         plt.xlabel("X")
         plt.ylabel("Y")
-        draw_ransack(viking,False)
+        draw_ransack(viking,False, False)
         plt.subplot(334)
         plt.xlabel("X")
         plt.ylabel("Y")
-        draw_ransack(viking,True)
+        draw_ransack(viking,True, False)
+        plt.subplot(337)
+        plt.xlabel("X")
+        plt.ylabel("Y")
+        draw_ransack(viking,True, True)
+
 
         vikings.append(viking)
 
@@ -171,11 +178,16 @@ with open(filepath) as csv_file:
         plt.title(plt_title_str)
         plt.xlabel("X")
         plt.ylabel("Z")
-        draw_ransack(viking,False)
+        draw_ransack(viking,False, False)
         plt.subplot(335)
         plt.xlabel("X")
         plt.ylabel("Z")
-        draw_ransack(viking,True)
+        draw_ransack(viking,True, False)
+        plt.subplot(338)
+        plt.xlabel("X")
+        plt.ylabel("Z")
+        draw_ransack(viking,True, True)
+
 
         vikings.append(viking)
 
@@ -186,15 +198,20 @@ with open(filepath) as csv_file:
         plt.subplot(333)
         plt.xlabel("Y")
         plt.ylabel("Z")
-        draw_ransack(viking,False)
+        draw_ransack(viking,False, False)
         plt.subplot(336)
         plt.xlabel("Y")
         plt.ylabel("Z")
-        draw_ransack(viking,True)
+        draw_ransack(viking,True, False)
+        plt.subplot(339)
+        plt.xlabel("Y")
+        plt.ylabel("Z")
+        draw_ransack(viking,True, True)
+
 
         vikings.append(viking)
 
-        cluster_hits_from_ransack(vikings, line_count, x, y, z)
+        #cluster_hits_from_ransack(vikings, line_count, x, y, z)
 
         plt.tight_layout()
 

@@ -45,6 +45,8 @@ class ransacked_track:
             self.compare_n_hits = in_track.compare_n_hits
         for xx in in_track.hit_indecies:
             self.hit_indecies.append(xx)
+    def add_hit(self, index):
+        self.hit_indecies.append(index)
 
 class viking:
     """
@@ -194,8 +196,8 @@ class viking:
             out.append(track_distances)
         return out
 
-    def get_track_indecies(self):
-        out = []
+    def grow_tracks(self):
+        evt_closest_indecies = []
         for ii in range(len(self.X_in)):
             x = self.X_in[ii][0]
             y = self.y_in[ii] 
@@ -206,9 +208,11 @@ class viking:
                 if dist < min_dist:
                     min_dist = dist
                     min_index = ii
-            out.append(min_index)
-        return out
-
-    #TODO: method that grows cleaned tracks to include all closest points
-    #def grow_tracks(self):
+            evt_closest_indecies.append(min_index)
+            for ii in range(len(self.ransacked_tracks)):
+                self.ransacked_tracks[ii].hit_indecies.clear()
+            for ii, xx in enumerate(evt_closest_indecies):
+                if xx == -1:
+                    continue
+                self.ransacked_tracks[int(xx)].add_hit(ii)
 
