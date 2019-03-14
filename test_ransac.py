@@ -17,9 +17,9 @@ def draw_ransack(viking, clean, grow):
     plt.scatter(x_draw, y_draw, color='k', marker='.')
 
     colors = ['r', 'g', 'b', 'c', 'm', 'y']
-    if clean and not grow:
+    if clean:
         viking.clean_tracks()
-    if grow and clean:
+    if grow:
         viking.grow_tracks()
     for itrack, track in enumerate(viking.get_tracks()):
         x_draw = np.ndarray(len(track.hit_indecies))
@@ -55,6 +55,20 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
          -> this is not working so well
     """
 
+    #TODO
+    """
+        try this:
+            -> take all possible combinations per event: event 1 belogns to track 1 in x-y, 2 in x-z, 3 in y-z:
+                  -> event goes into cluster 123
+            -> match clusters across planes by their common axis (x, y, z)
+               -> find a good match: intersect
+
+            -> compare all tracks across all views, if there is overlap above some threshold, combine (union) those 
+               tracks into a cluster
+
+
+    """
+
     cluster_X = np.ndarray((len(x),len(vikings)))
 
     for ii, viking in enumerate(vikings):
@@ -62,28 +76,27 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
         for jj, index in enumerate(track_indecies):
             cluster_X[jj][ii] = index
 
-    """
-    cluster_X_t = []
-    for viking in vikings:
-        track_distances = viking.get_distances()
-        for dd in track_distances:
-            cluster_X_t.append(dd)
-    if len(cluster_X_t) < 1:
-        return
+    clusters = []
+    for xx in cluster_X:
+        cluster = 10000*xx[0] + 100*xx[1] + xx[2]
+        seen_before = False
+        for cc in clusters:
+            if cc == cluster:
+                seen_before = True
+                break
+        if not seen_before:
+            clusters.append(cluster)
 
-    cluster_X = np.ndarray((len(cluster_X_t[0]),len(cluster_X_t)))
-
-    for ii in range(len(cluster_X_t)):
-        for jj in range(len(cluster_X_t[ii])):
-            cluster_X[jj][ii] = cluster_X_t[ii][jj]
-
-    db = DBSCAN(eps=0.15, min_samples=2, metric='cosine').fit(cluster_X)
-    """
-
-    db = DBSCAN(eps=0.15, min_samples=2).fit(cluster_X)
+    evt_labels = []
+    for xx in cluster_X:
+        cluster = 10000*xx[0] + 100*xx[1] + xx[2]
+        for ii, cc in enumerate(clusters):
+            if cluster == cc:
+                evt_labels.append(ii)
+                break
 
     n_clusters = -1
-    for xx in db.labels_:
+    for xx in evt_labels:
         if xx > n_clusters:
             n_clusters = xx
     n_clusters += 1
@@ -92,18 +105,18 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
 
     plt.subplot(337)
     for ii in range(len(x)):
-        db_class = db.labels_[ii]
-        plt.scatter(x[ii], y[ii], color=colors[db_class%6], marker='.')
+        cluster = evt_labels[ii]
+        plt.scatter(x[ii], y[ii], color=colors[cluster%6], marker='.')
     plt.subplot(338)
     plt_title_str = str(n_clusters) + " clusters"
     plt.title(plt_title_str)
     for ii in range(len(x)):
-        db_class = db.labels_[ii]
-        plt.scatter(x[ii], z[ii], color=colors[db_class%6], marker='.')
+        cluster = evt_labels[ii]
+        plt.scatter(x[ii], z[ii], color=colors[cluster%6], marker='.')
     plt.subplot(339)
     for ii in range(len(x)):
-        db_class = db.labels_[ii]
-        plt.scatter(y[ii], z[ii], color=colors[db_class%6], marker='.')
+        cluster = evt_labels[ii]
+        plt.scatter(y[ii], z[ii], color=colors[cluster%6], marker='.')
 
 """
     print_string = "./png/DBSCAN_test_" + str(line_count) + ".png"
@@ -160,10 +173,6 @@ with open(filepath) as csv_file:
         plt.subplot(334)
         plt.xlabel("X")
         plt.ylabel("Y")
-        draw_ransack(viking,True, False)
-        plt.subplot(337)
-        plt.xlabel("X")
-        plt.ylabel("Y")
         draw_ransack(viking,True, True)
 
 
@@ -182,10 +191,6 @@ with open(filepath) as csv_file:
         plt.subplot(335)
         plt.xlabel("X")
         plt.ylabel("Z")
-        draw_ransack(viking,True, False)
-        plt.subplot(338)
-        plt.xlabel("X")
-        plt.ylabel("Z")
         draw_ransack(viking,True, True)
 
 
@@ -202,16 +207,12 @@ with open(filepath) as csv_file:
         plt.subplot(336)
         plt.xlabel("Y")
         plt.ylabel("Z")
-        draw_ransack(viking,True, False)
-        plt.subplot(339)
-        plt.xlabel("Y")
-        plt.ylabel("Z")
         draw_ransack(viking,True, True)
 
 
         vikings.append(viking)
 
-        #cluster_hits_from_ransack(vikings, line_count, x, y, z)
+        cluster_hits_from_ransack(vikings, line_count, x, y, z)
 
         plt.tight_layout()
 

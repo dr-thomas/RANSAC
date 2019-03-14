@@ -216,3 +216,18 @@ class viking:
                     continue
                 self.ransacked_tracks[int(xx)].add_hit(ii)
 
+    def get_track_indecies(self):
+        evt_closest_indecies = []
+        for ii in range(len(self.X_in)):
+            x = self.X_in[ii][0]
+            y = self.y_in[ii] 
+            min_dist = 555e10
+            min_index = -1
+            for ii, xx in enumerate(self.ransacked_tracks):
+                dist = abs(xx.slope*x+xx.intercept-y)
+                if dist < min_dist:
+                    min_dist = dist
+                    min_index = ii
+            evt_closest_indecies.append(min_index)
+        return evt_closest_indecies
+
