@@ -36,37 +36,22 @@ def draw_ransack(viking, clean, grow):
         plt.plot([x_draw.min(), x_draw.max()], [a*x_draw.min()+b, a*x_draw.max()+b], color=colors[itrack%6])
 
 def cluster_hits_from_ransack(vikings, ievent, x, y, z):
-    """
-       for each track in each ransack, if some fraction of hit indecies are shared by another track in event, 
-       take interesection of tracks? 
-
-       for tracks for vikings, take all possible interesections and grab so many biggest ones? 
-          -> not this
-
-       count degenerate tracks across all views, if say 90% of the hits in a track are also in a track in a different view,
-       combine those tracks (union or intersect? something else?), more generally if tracks are similar by some 
-       measure, then combine.
-
-       for each point, form a vector whose elements are the deistances to each line -> do DBSCAN or something like 
-       that on these features
-         -> might not need grow_tracks method wiht this idea
-         -> also might not need to clean tracks
-
-         -> this is not working so well
-    """
-
     #TODO
     """
-        try this:
-            -> take all possible combinations per event: event 1 belogns to track 1 in x-y, 2 in x-z, 3 in y-z:
-                  -> event goes into cluster 123
-            -> match clusters across planes by their common axis (x, y, z)
-               -> find a good match: intersect
+      - combine confused clusters:
+        -> to nearest 'good' cluster?  
 
-            -> compare all tracks across all views, if there is overlap above some threshold, combine (union) those 
-               tracks into a cluster
+      - identify 'high confidence clusters' as clusters that have high overlap across views
+        - if a cluster is seen to be an intersection of two high confidence clusters, split hits into nearer high confidence
+          cluster 
 
+      - form 3-D tracks from high overlap or otherwise high confidence 3D clusters, assign all remaining hits to their
+        nearest track in 3D
 
+     DO THIS ONE:
+      - for all possible 3D clusters (what is built now), check for consisteny amoung planes: compute 3 3D tracks by 
+        comparing across each possible pair of planes.  form 3D tracks from conistent ones, assign hits from all 
+        inconsistent clusters to nearest 3D track
     """
 
     cluster_X = np.ndarray((len(x),len(vikings)))
@@ -74,7 +59,7 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
     for ii, viking in enumerate(vikings):
         track_indecies = viking.get_track_indecies()
         for jj, index in enumerate(track_indecies):
-            cluster_X[jj][ii] = index
+            cluster_X[jj][ii] = index[0]
 
     clusters = []
     for xx in cluster_X:
@@ -87,12 +72,24 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
         if not seen_before:
             clusters.append(cluster)
 
+    clusters_count = [0 for ii in range(len(clusters))]
+    for xx in cluster_X:
+        cluster = 10000*xx[0] + 100*xx[1] + xx[2]
+        for ii, cc in enumerate(clusters):
+            if cluster == cc:
+                clusters_count[ii] += 1
+                break
+
+
     evt_labels = []
     for xx in cluster_X:
         cluster = 10000*xx[0] + 100*xx[1] + xx[2]
         for ii, cc in enumerate(clusters):
             if cluster == cc:
-                evt_labels.append(ii)
+                if clusters_count[ii] < 5:
+                    evt_labels.append(-1)
+                else:
+                    evt_labels.append(ii)
                 break
 
     n_clusters = -1
@@ -106,16 +103,22 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
     plt.subplot(337)
     for ii in range(len(x)):
         cluster = evt_labels[ii]
+        if cluster == -1:
+            continue
         plt.scatter(x[ii], y[ii], color=colors[cluster%6], marker='.')
     plt.subplot(338)
     plt_title_str = str(n_clusters) + " clusters"
     plt.title(plt_title_str)
     for ii in range(len(x)):
         cluster = evt_labels[ii]
+        if cluster == -1:
+            continue
         plt.scatter(x[ii], z[ii], color=colors[cluster%6], marker='.')
     plt.subplot(339)
     for ii in range(len(x)):
         cluster = evt_labels[ii]
+        if cluster == -1:
+            continue
         plt.scatter(y[ii], z[ii], color=colors[cluster%6], marker='.')
 
 """
