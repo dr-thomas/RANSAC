@@ -52,6 +52,10 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
       - for all possible 3D clusters (what is built now), check for consisteny amoung planes: compute 3 3D tracks by 
         comparing across each possible pair of planes.  form 3D tracks from conistent ones, assign hits from all 
         inconsistent clusters to nearest 3D track
+
+        for quality clusters, take intersection and re-fit in 3D to get track hypothesis?
+
+      - for all possibe 3D clusters: fit track in 3-D
     """
 
     cluster_X = np.ndarray((len(x),len(vikings)))
@@ -80,16 +84,22 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
                 clusters_count[ii] += 1
                 break
 
+    hc_clusters = []
+    for ii in range(len(clusters)):
+        if clusters_count[ii] >= 5:
+            hc_clusters.append(clusters[ii])
+
 
     evt_labels = []
     for xx in cluster_X:
         cluster = 10000*xx[0] + 100*xx[1] + xx[2]
         for ii, cc in enumerate(clusters):
             if cluster == cc:
-                if clusters_count[ii] < 5:
-                    evt_labels.append(-1)
-                else:
-                    evt_labels.append(ii)
+                #if clusters_count[ii] < 5:
+                    #evt_labels.append(-1)
+                #else:
+                    #evt_labels.append(ii)
+                evt_labels.append(ii)
                 break
 
     n_clusters = -1

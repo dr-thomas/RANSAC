@@ -91,7 +91,7 @@ class viking:
         self.n_ransacs += 1
 
         #this_ransac = linear_model.RANSACRegressor(residual_threshold=2., stop_probability=0.99)
-        this_ransac = linear_model.RANSACRegressor(stop_probability=0.9)
+        this_ransac = linear_model.RANSACRegressor(stop_probability=0.95)
         try:
             this_ransac.fit(self.X, self.y)
         except:
