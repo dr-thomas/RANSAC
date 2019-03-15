@@ -239,7 +239,30 @@ with open(filepath) as csv_file:
         plt.ylabel("Z")
         draw_ransack(viking,True, True)
 
+        vikings.append(viking)
 
+        viking = ransac.viking()
+        viking.set_data(z,y)
+        viking.scale_data()
+        viking.ransack()
+        viking.clean_tracks()
+        viking.grow_tracks()
+        vikings.append(viking)
+
+        viking = ransac.viking()
+        viking.set_data(x,z)
+        viking.scale_data()
+        viking.ransack()
+        viking.clean_tracks()
+        viking.grow_tracks()
+        vikings.append(viking)
+
+        viking = ransac.viking()
+        viking.set_data(y,x)
+        viking.scale_data()
+        viking.ransack()
+        viking.clean_tracks()
+        viking.grow_tracks()
         vikings.append(viking)
 
         cluster_hits_from_ransack(vikings, line_count, x, y, z)
