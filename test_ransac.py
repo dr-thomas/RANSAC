@@ -36,27 +36,6 @@ def draw_ransack(viking, clean, grow):
         plt.plot([x_draw.min(), x_draw.max()], [a*x_draw.min()+b, a*x_draw.max()+b], color=colors[itrack%6])
 
 def cluster_hits_from_ransack(vikings, ievent, x, y, z):
-    #TODO
-    """
-      - combine confused clusters:
-        -> to nearest 'good' cluster?  
-
-      - identify 'high confidence clusters' as clusters that have high overlap across views
-        - if a cluster is seen to be an intersection of two high confidence clusters, split hits into nearer high confidence
-          cluster 
-
-      - form 3-D tracks from high overlap or otherwise high confidence 3D clusters, assign all remaining hits to their
-        nearest track in 3D
-
-     DO THIS ONE:
-      - for all possible 3D clusters (what is built now), check for consisteny amoung planes: compute 3 3D tracks by 
-        comparing across each possible pair of planes.  form 3D tracks from conistent ones, assign hits from all 
-        inconsistent clusters to nearest 3D track
-
-        for quality clusters, take intersection and re-fit in 3D to get track hypothesis?
-
-      - for all possibe 3D clusters: fit track in 3-D
-    """
 
     cluster_X = np.ndarray((len(x),len(vikings)))
 
@@ -107,14 +86,9 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
     while are_unused and attempts < 100:
         attempts += 1
         are_unused = False
-        for xx in evt_labels:
-            if xx == -1:
-                are_unused = True
-                break
-        if not are_unused:
-            break
         for ii, xx in enumerate(evt_labels):
             if xx == -1:
+                are_unused = True
                 min_dist = 555e10
                 for jj in range(len(x)):
                     dist = (x[ii]-x[jj])*(x[ii]-x[jj])
@@ -147,13 +121,6 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
     for ii in range(len(x)):
         cluster = evt_labels[ii]
         plt.scatter(y[ii], z[ii], color=colors[cluster%7], marker='.')
-
-"""
-    print_string = "./png/DBSCAN_test_" + str(line_count) + ".png"
-    plt.savefig(print_string)
-    plt.close('all')
-    """
-
 
 
 filepath = "./csv/train_0007.csv"
