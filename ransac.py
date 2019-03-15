@@ -169,24 +169,6 @@ class viking:
             out_tracks.append(this_track)
         self.ransacked_tracks = out_tracks
 
-    def get_distances(self):
-        #TODO: is this needed anymore?
-        out  = []
-        for track in self.ransacked_tracks:
-            track_distances = []
-            for ii in range(len(self.X_in)):
-                x = self.X_in[ii][0]
-                y = self.y_in[ii]
-                #track_distances.append(track.slope*x+track.intercept-y)
-                # not great, this will cause many clusters along a line, try something else 
-                if abs(track.slope*x+track.intercept-y) > 5.:
-                    track_distances.append(0)
-                else:
-                    track_distances.append(1)
-
-            out.append(track_distances)
-        return out
-
     def grow_tracks(self):
         evt_closest_indecies = []
         for ii in range(len(self.X_in)):
@@ -227,4 +209,74 @@ class viking:
                 evt_dist = [min_index, min_dist]
             evt_closest_indecies.append(evt_dist)
         return evt_closest_indecies
+
+def cluster_hits(vikings, hit_data):
+
+    x = hit_data[0]
+    y = hit_data[1]
+    z = hit_data[2]
+
+    cluster_X = np.ndarray((len(x),len(vikings)))
+
+    for ii, viking in enumerate(vikings):
+        track_indecies = viking.get_track_indecies()
+        for jj, index in enumerate(track_indecies):
+            cluster_X[jj][ii] = index[0]
+
+    clusters = []
+    for xx in cluster_X:
+        cluster = 10000*xx[0] + 100*xx[1] + xx[2]
+        seen_before = False
+        for cc in clusters:
+            if cc == cluster:
+                seen_before = True
+                break
+        if not seen_before:
+            clusters.append(cluster)
+
+    clusters_count = [0 for ii in range(len(clusters))]
+    for xx in cluster_X:
+        cluster = 10000*xx[0] + 100*xx[1] + xx[2]
+        for ii, cc in enumerate(clusters):
+            if cluster == cc:
+                clusters_count[ii] += 1
+                break
+
+    hc_clusters = []
+    for ii in range(len(clusters)):
+        if clusters_count[ii] >= 10:
+            hc_clusters.append(clusters[ii])
+
+
+    evt_labels = []
+    for xx in cluster_X:
+        cluster = 10000*xx[0] + 100*xx[1] + xx[2]
+        was_hc = False
+        for ii, cc in enumerate(hc_clusters):
+            if cluster == cc:
+                evt_labels.append(ii)
+                was_hc = True
+                break
+        if not was_hc:
+            evt_labels.append(-1)
+
+    are_unused = True
+    attempts = 0
+    while are_unused and attempts < 100:
+        attempts += 1
+        are_unused = False
+        for ii, xx in enumerate(evt_labels):
+            if xx == -1:
+                are_unused = True
+                min_dist = 555e10
+                for jj in range(len(x)):
+                    dist = (x[ii]-x[jj])*(x[ii]-x[jj])
+                    dist += (y[ii]-y[jj])*(y[ii]-y[jj])
+                    dist += (z[ii]-z[jj])*(z[ii]-z[jj])
+                    if dist < min_dist:
+                        min_dist = dist
+                        evt_labels[ii] = evt_labels[jj]
+
+    return evt_labels
+
 
