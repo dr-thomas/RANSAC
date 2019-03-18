@@ -107,7 +107,14 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
 
     colors = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
 
-    plt.subplot(337)
+    ax = plt.subplot(337)
+    plt.xlabel("X")
+    plt.ylabel("Y")
+    pad = 5
+    plt.annotate("Final Clusters", xy=(0, 0.5), xytext=(-ax.yaxis.labelpad - pad, 0),
+            xycoords=ax.yaxis.label, textcoords='offset points',		
+            size='large', ha='right', va='center', rotation=90)
+
     for ii in range(len(x)):
         cluster = evt_labels[ii]
         plt.scatter(x[ii], y[ii], color=colors[cluster%7], marker='.')
@@ -163,13 +170,22 @@ with open(filepath) as csv_file:
         viking.set_data(x,y)
         viking.scale_data()
         viking.ransack()
-        plt.subplot(331)
+        ax = plt.subplot(331)
         plt.xlabel("X")
         plt.ylabel("Y")
+        pad = 5
+        plt.annotate("RANSAC", xy=(0, 0.5), xytext=(-ax.yaxis.labelpad - pad, 0),
+                xycoords=ax.yaxis.label, textcoords='offset points',		
+                size='large', ha='right', va='center', rotation=90)
+
         draw_ransack(viking,False, False)
-        plt.subplot(334)
+        ax = plt.subplot(334)
         plt.xlabel("X")
         plt.ylabel("Y")
+        plt.annotate("Clean and Grow", xy=(0, 0.5), xytext=(-ax.yaxis.labelpad - pad, 0),
+                xycoords=ax.yaxis.label, textcoords='offset points',		
+                size='large', ha='right', va='center', rotation=90)
+
         draw_ransack(viking,True, True)
 
 
@@ -235,11 +251,13 @@ with open(filepath) as csv_file:
         cluster_hits_from_ransack(vikings, line_count, x, y, z)
 
         plt.tight_layout()
+        plt.subplots_adjust(left=0.06)
 
         print_string = "./png/RANSAC_test_" + str(line_count) + ".png"
         plt.savefig(print_string)
         plt.close('all')
 
+        exit()
 
         x_data.clear()
         y_data.clear()
