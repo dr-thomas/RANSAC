@@ -34,6 +34,11 @@ def draw_ransack(viking, clean, grow):
         a = track.slope
         b = track.intercept
         plt.plot([x_draw.min(), x_draw.max()], [a*x_draw.min()+b, a*x_draw.max()+b], color=colors[itrack%6])
+    if clean and grow:
+        viking.find_vertex_2D()
+        if viking.found_vertex:
+            print(viking.vertex_2D)
+            plt.plot(viking.vertex_2D[0]-viking.x_min, viking.vertex_2D[1]-viking.y_min, marker='*')
 
 def cluster_hits_from_ransack(vikings, ievent, x, y, z):
 
@@ -216,7 +221,7 @@ with open(filepath) as csv_file:
 
 
         vikings.append(viking)
-        viking_labels.appned("XY")
+        viking_labels.append("XY")
 
         viking = ransac.viking()
         viking.set_data(z,x)
@@ -235,7 +240,7 @@ with open(filepath) as csv_file:
 
 
         vikings.append(viking)
-        viking_labels.appned("ZX")
+        viking_labels.append("ZX")
 
         viking = ransac.viking()
         viking.set_data(y,z)
@@ -251,7 +256,7 @@ with open(filepath) as csv_file:
         draw_ransack(viking,True, True)
 
         vikings.append(viking)
-        viking_labels.appned("YZ")
+        viking_labels.append("YZ")
 
         viking = ransac.viking()
         viking.set_data(z,y)
@@ -260,7 +265,7 @@ with open(filepath) as csv_file:
         viking.clean_tracks()
         viking.grow_tracks()
         vikings.append(viking)
-        viking_labels.appned("ZY")
+        viking_labels.append("ZY")
 
         viking = ransac.viking()
         viking.set_data(x,z)
@@ -269,7 +274,7 @@ with open(filepath) as csv_file:
         viking.clean_tracks()
         viking.grow_tracks()
         vikings.append(viking)
-        viking_labels.appned("XZ")
+        viking_labels.append("XZ")
 
         viking = ransac.viking()
         viking.set_data(y,x)
@@ -278,7 +283,7 @@ with open(filepath) as csv_file:
         viking.clean_tracks()
         viking.grow_tracks()
         vikings.append(viking)
-        viking_labels.appned("YX")
+        viking_labels.append("YX")
 
         cluster_hits_from_ransack(vikings, line_count, x, y, z)
 
@@ -288,8 +293,6 @@ with open(filepath) as csv_file:
         print_string = "./png/RANSAC_test_" + str(line_count) + ".png"
         plt.savefig(print_string)
         plt.close('all')
-
-        exit()
 
         x_data.clear()
         y_data.clear()
