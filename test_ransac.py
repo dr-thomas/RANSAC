@@ -46,7 +46,9 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
 
     clusters = []
     for xx in cluster_X:
-        cluster = 10000*xx[0] + 100*xx[1] + xx[2]
+        cluster = 0.
+        for jj, yy in enumerate(xx):
+            cluster += 100**float(jj)*yy
         seen_before = False
         for cc in clusters:
             if cc == cluster:
@@ -57,7 +59,9 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
 
     clusters_count = [0 for ii in range(len(clusters))]
     for xx in cluster_X:
-        cluster = 10000*xx[0] + 100*xx[1] + xx[2]
+        cluster = 0.
+        for jj, yy in enumerate(xx):
+            cluster += 100**float(jj)*yy
         for ii, cc in enumerate(clusters):
             if cluster == cc:
                 clusters_count[ii] += 1
@@ -71,7 +75,9 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
 
     evt_labels = []
     for xx in cluster_X:
-        cluster = 10000*xx[0] + 100*xx[1] + xx[2]
+        cluster = 0.
+        for jj, yy in enumerate(xx):
+            cluster += 100**float(jj)*yy
         was_hc = False
         for ii, cc in enumerate(hc_clusters):
             if cluster == cc:
