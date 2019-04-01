@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn import linear_model
 import math
+import statistics as stats
 
 #General TODO:
 """
@@ -60,18 +61,18 @@ class viking:
             self.hit_indecies_in[ii] = ii
 
     def scale_data(self):
-        x_min = 555e10
+        self.x_min = 555e10
         for xx in self.X_in:
-            if xx[0] < x_min:
-                x_min = xx[0]
-        y_min = 555e10
+            if xx[0] < self.x_min:
+                self.x_min = xx[0]
+        self.y_min = 555e10
         for xx in self.y_in:
-            if xx < y_min:
-                y_min = xx
+            if xx < self.y_min:
+                self.y_min = xx
         for ii in range(len(self.X_in)):
-            self.X_in[ii][0] = self.X_in[ii][0] - x_min
+            self.X_in[ii][0] = self.X_in[ii][0] - self.x_min
         for ii in range(len(self.y_in)):
-            self.y_in[ii] = self.y_in[ii] - y_min
+            self.y_in[ii] = self.y_in[ii] - self.y_min
 
     def ransack(self):
         if self.n_ransacs == 0:
@@ -227,4 +228,61 @@ class viking:
                 evt_dist = [min_index, min_dist]
             evt_closest_indecies.append(evt_dist)
         return evt_closest_indecies
+
+    def find_vertex_2D(self):
+        vtxs = []
+        for ii, track1 in enumerate(self.ransacked_tracks):
+            for jj, track2 in enumerate(self.ransacked_tracks):
+                if ii == jj:
+                    continue
+                m1 = track1.slope
+                b1 = track1.intercept
+                m2 = track2.slope
+                b2 = track2.intercept
+                if abs(m1-m2) < 1e-3:
+                    continue
+                vtx_x = (b2-b1)/(m1-m2)
+                vtx_y = m1*vtx_x+b1
+                vtxs.append([vtx_x,vtx_y,(track1.compare_n_hits + track2.compare_n_hits)])
+        #TODO: only works if data has been scaled (data really should have been scaled by now anyway),
+        #      should check that it has been with a flag or something
+        self.found_vertex = False
+        self.vertex_2D = [-555e10,-555e10]
+
+        if len(vtxs) == 0:
+            return
+        else:
+            self.found_vertex = True
+
+        if len(vtxs) == 1:
+            self.vertex_2D[0] = vtxs[0][0] + self.x_min
+            self.vertex_2D[1] = vtxs[0][1] + self.y_min
+            return
+
+        x_max = 0
+        for xx in self.X_in:
+            if xx[0] > x_max:
+                x_max = xx[0]
+        y_max = 0
+        for xx in self.y_in:
+            if xx > y_max:
+                y_max = xx
+
+        vtx_x_mean = stats.mean([xx[0] for xx in vtxs])
+        vtx_x_std = stats.stdev([xx[0] for xx in vtxs])
+        vtx_y_mean = stats.mean([xx[1] for xx in vtxs])
+        vtx_y_std = stats.stdev([xx[1] for xx in vtxs])
+
+        if vtx_x_std > x_max/4. or vtx_y_std > y_max/4.:
+            n_max = -555e10
+            imax_vtx = -1
+            for ii, vv in enumerate(vtxs):
+                if n_max > vv[2]:
+                    n_max = vv[2]
+                    imax_vtx = ii
+            self.vertex_2D[0] = vtxs[imax_vtx][0] + self.x_min
+            self.vertex_2D[1] = vtxs[imax_vtx][1] + self.y_min
+        else:
+            self.vertex_2D[0] = vtx_x_mean + self.x_min
+            self.vertex_2D[1] = vtx_y_mean + self.y_min
 

@@ -117,6 +117,10 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
 
     """
       - rather than a re-fit, maybe use exisiting vikings slopes and intercepts in each of all 6 planes to do this? 
+        - data is scaled, so would need to rescale vertex postitions to compare across different planes
+        - still leaning towards each viking having a vertex guess
+      - will need quality cuts: if spread of possible vertecies is to large on some gloabal absolute scale, do not consider
+        that plane.  if vertex is too far outside bounding box of all hits, do not consider it
     """
     #TODO: once vertexing stuff is in place, seperately study how well it does in some test set
 
@@ -186,6 +190,7 @@ with open(filepath) as csv_file:
         plt.figure(figsize=(15,15))
 
         vikings = []
+        viking_labels = []
 
         viking = ransac.viking()
         viking.set_data(x,y)
@@ -211,6 +216,7 @@ with open(filepath) as csv_file:
 
 
         vikings.append(viking)
+        viking_labels.appned("XY")
 
         viking = ransac.viking()
         viking.set_data(z,x)
@@ -229,6 +235,7 @@ with open(filepath) as csv_file:
 
 
         vikings.append(viking)
+        viking_labels.appned("ZX")
 
         viking = ransac.viking()
         viking.set_data(y,z)
@@ -244,6 +251,7 @@ with open(filepath) as csv_file:
         draw_ransack(viking,True, True)
 
         vikings.append(viking)
+        viking_labels.appned("YZ")
 
         viking = ransac.viking()
         viking.set_data(z,y)
@@ -252,6 +260,7 @@ with open(filepath) as csv_file:
         viking.clean_tracks()
         viking.grow_tracks()
         vikings.append(viking)
+        viking_labels.appned("ZY")
 
         viking = ransac.viking()
         viking.set_data(x,z)
@@ -260,6 +269,7 @@ with open(filepath) as csv_file:
         viking.clean_tracks()
         viking.grow_tracks()
         vikings.append(viking)
+        viking_labels.appned("XZ")
 
         viking = ransac.viking()
         viking.set_data(y,x)
@@ -268,6 +278,7 @@ with open(filepath) as csv_file:
         viking.clean_tracks()
         viking.grow_tracks()
         vikings.append(viking)
+        viking_labels.appned("YX")
 
         cluster_hits_from_ransack(vikings, line_count, x, y, z)
 
