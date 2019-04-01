@@ -2,8 +2,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 import csv
 import ransac
-from sklearn.cluster import DBSCAN
 from sklearn import metrics
+from sklearn.linear_model import LinearRegression
 
 def draw_ransack(viking, clean, grow):
 
@@ -97,7 +97,22 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
                     if dist < min_dist:
                         min_dist = dist
                         evt_labels[ii] = evt_labels[jj]
-                
+
+    #TODO: vetex clusters here 
+    """
+      - in each plane, lin fit each cluster, look for intersections
+      - for each intersection, give a vertex candidate in that plane, (weighted by npoints in cluster?) average the 
+        positions of multiple vertecies
+      - to get 3D vertex, average (again, some weighted here?) the two positions across the shared planes
+      - then split clusters that are on both sides of vertex
+    """
+
+    #TODO: this is ready for a re-factor/thorough clean up
+
+    """
+      - rather than a re-fit, maybe use exisiting vikings slopes and intercepts in each of all 6 planes to do this? 
+    """
+    #TODO: once vertexing stuff is in place, seperately study how well it does in some test set
 
     n_clusters = -1
     for xx in evt_labels:

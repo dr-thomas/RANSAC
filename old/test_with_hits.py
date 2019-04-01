@@ -6,7 +6,7 @@ from sklearn import linear_model, datasets
 import csv
 
 
-filepath = "./csv/train_0011.csv"
+filepath = "../csv/train_0011.csv"
 
 X_data = []
 y_data = []
@@ -67,9 +67,9 @@ while xline_point < X.max():
 line_y_ransac = ransac.predict(line_X)
 
 lw = 2
-plt.scatter(X[inlier_mask], y[inlier_mask], color='yellowgreen', marker='.',
+plt.scatter(X[inlier_mask], y[inlier_mask], color='cornflowerblue', marker='.',
             label='Inliers')
-plt.scatter(X[outlier_mask], y[outlier_mask], color='gold', marker='.',
+plt.scatter(X[outlier_mask], y[outlier_mask], color='yellowgreen', marker='.',
             label='Outliers')
 plt.plot(line_X, line_y_ransac, color='cornflowerblue', linewidth=lw,
          label='RANSAC regressor')
@@ -78,8 +78,8 @@ plt.xlabel("X")
 plt.ylabel("Y")
 plt.savefig("./RANSAC_test1.png")
 
-X = X[inlier_mask]
-y = y[inlier_mask]
+X = X[outlier_mask]
+y = y[outlier_mask]
 
 ransac = linear_model.RANSACRegressor()
 ransac.fit(X, y)
@@ -103,9 +103,9 @@ line_y_ransac = ransac.predict(line_X)
 
 plt.figure()
 lw = 2
-plt.scatter(X[inlier_mask], y[inlier_mask], color='yellowgreen', marker='.',
+plt.scatter(X[inlier_mask], y[inlier_mask], color='cornflowerblue', marker='.',
             label='Inliers')
-plt.scatter(X[outlier_mask], y[outlier_mask], color='gold', marker='.',
+plt.scatter(X[outlier_mask], y[outlier_mask], color='yellowgreen', marker='.',
             label='Outliers')
 plt.plot(line_X, line_y_ransac, color='cornflowerblue', linewidth=lw,
          label='RANSAC regressor')
