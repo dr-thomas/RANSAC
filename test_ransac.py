@@ -4,6 +4,7 @@ import csv
 import ransac
 from sklearn import metrics
 from sklearn.linear_model import LinearRegression
+import statistics as stats
 
 def draw_ransack(viking, clean, grow):
 
@@ -34,13 +35,8 @@ def draw_ransack(viking, clean, grow):
         a = track.slope
         b = track.intercept
         plt.plot([x_draw.min(), x_draw.max()], [a*x_draw.min()+b, a*x_draw.max()+b], color=colors[itrack%6])
-    if clean and grow:
-        viking.find_vertex_2D()
-        if viking.found_vertex:
-            print(viking.vertex_2D)
-            plt.plot(viking.vertex_2D[0]-viking.x_min, viking.vertex_2D[1]-viking.y_min, marker='*')
 
-def cluster_hits_from_ransack(vikings, ievent, x, y, z):
+def cluster_hits_from_ransack(vikings, viking_labels, ievent, x, y, z):
 
     cluster_X = np.ndarray((len(x),len(vikings)))
 
@@ -109,25 +105,27 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
                         min_dist = dist
                         evt_labels[ii] = evt_labels[jj]
 
-    #TODO: vetex clusters here 
-    """
-      - in each plane, lin fit each cluster, look for intersections
-      - for each intersection, give a vertex candidate in that plane, (weighted by npoints in cluster?) average the 
-        positions of multiple vertecies
-      - to get 3D vertex, average (again, some weighted here?) the two positions across the shared planes
-      - then split clusters that are on both sides of vertex
-    """
-
+    #TODO: split clusters that are on both sides of vertex
     #TODO: this is ready for a re-factor/thorough clean up
-
-    """
-      - rather than a re-fit, maybe use exisiting vikings slopes and intercepts in each of all 6 planes to do this? 
-        - data is scaled, so would need to rescale vertex postitions to compare across different planes
-        - still leaning towards each viking having a vertex guess
-      - will need quality cuts: if spread of possible vertecies is to large on some gloabal absolute scale, do not consider
-        that plane.  if vertex is too far outside bounding box of all hits, do not consider it
-    """
     #TODO: once vertexing stuff is in place, seperately study how well it does in some test set
+
+    #get 3D vertex
+    labels = ['X', 'Y', 'Z']
+    vtxs = [[],[],[]]
+    for iviking, viking in enumerate(vikings):
+        viking.find_vertex_2D()
+        if viking.found_vertex:
+            for ilabel, ll in enumerate(labels):
+                if viking_labels[iviking][0] == ll:
+                    vtxs[ilabel].append(viking.vertex_2D[0])
+                if viking_labels[iviking][1] == ll:
+                    vtxs[ilabel].append(viking.vertex_2D[1])
+    vtx = [-555e10 for ii in range(3)]
+    found_vtx = False
+    if len(vtxs[0]) > 0 and len(vtxs[1]) > 0 and len(vtxs[2]) > 0:
+        found_vtx = True
+        for ii in range(3):
+            vtx[ii] = stats.mean([xx for xx in vtxs[ii]])
 
     n_clusters = -1
     for xx in evt_labels:
@@ -148,17 +146,22 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
     for ii in range(len(x)):
         cluster = evt_labels[ii]
         plt.scatter(x[ii], y[ii], color=colors[cluster%7], marker='.')
+        if found_vtx:
+            plt.plot(vtx[0], vtx[1], marker='*', markersize=20, color='gold')
     plt.subplot(338)
     plt_title_str = str(n_clusters) + " clusters"
     plt.title(plt_title_str)
     for ii in range(len(x)):
         cluster = evt_labels[ii]
         plt.scatter(z[ii], x[ii], color=colors[cluster%7], marker='.')
+        if found_vtx:
+            plt.plot(vtx[2], vtx[0], marker='*', markersize=20, color='gold')
     plt.subplot(339)
     for ii in range(len(x)):
         cluster = evt_labels[ii]
         plt.scatter(y[ii], z[ii], color=colors[cluster%7], marker='.')
-
+        if found_vtx:
+            plt.plot(vtx[1], vtx[2], marker='*', markersize=20, color='gold')
 
 filepath = "./csv/train_0007.csv"
 
@@ -285,7 +288,7 @@ with open(filepath) as csv_file:
         vikings.append(viking)
         viking_labels.append("YX")
 
-        cluster_hits_from_ransack(vikings, line_count, x, y, z)
+        cluster_hits_from_ransack(vikings, viking_labels, line_count, x, y, z)
 
         plt.tight_layout()
         plt.subplots_adjust(left=0.06)
