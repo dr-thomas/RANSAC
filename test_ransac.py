@@ -302,6 +302,4 @@ with open(filepath) as csv_file:
         y_data.clear()
         z_data.clear()
         line_count += 1
-        if line_count > 2:
-            exit()
 
