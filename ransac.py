@@ -171,24 +171,6 @@ class viking:
             out_tracks.append(this_track)
         self.ransacked_tracks = out_tracks
 
-    def get_distances(self):
-        #TODO: is this needed anymore?
-        out  = []
-        for track in self.ransacked_tracks:
-            track_distances = []
-            for ii in range(len(self.X_in)):
-                x = self.X_in[ii][0]
-                y = self.y_in[ii]
-                #track_distances.append(track.slope*x+track.intercept-y)
-                # not great, this will cause many clusters along a line, try something else 
-                if abs(track.slope*x+track.intercept-y) > 5.:
-                    track_distances.append(0)
-                else:
-                    track_distances.append(1)
-
-            out.append(track_distances)
-        return out
-
     def grow_tracks(self):
         evt_closest_indecies = []
         for ii in range(len(self.X_in)):
@@ -282,7 +264,6 @@ class viking:
             self.vertex_2D[0] = vtx_x_mean + self.x_min
             self.vertex_2D[1] = vtx_y_mean + self.y_min
 
-    #TODO: finish this!
     def split_colinear_tracks(self, vtx):
         track_indecies_to_delete = []
         new_tracks = []
@@ -299,9 +280,6 @@ class viking:
                     y = vtx[ilabel] - self.y_min
             dist = abs(a*x-y+b)/(math.sqrt(a*a+1))
             if dist < 5.:
-                print("splitting track")
-                #split track about vertex (x,y)
-                #create 2 new tracks, delete old one TODO: use index! TODO: validate
                 track_indecies_to_delete.append(itrack)
                 track1 = ransacked_track([], track.slope, track.intercept)
                 track2 = ransacked_track([], track.slope, track.intercept)

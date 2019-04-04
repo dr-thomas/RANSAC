@@ -6,6 +6,11 @@ from sklearn import metrics
 from sklearn.linear_model import LinearRegression
 import statistics as stats
 
+    #TODO: this is ready for a re-factor/thorough clean up
+
+    #TODO: once vertexing stuff is in place, seperately study how well it does in some test set
+
+
 def draw_ransack(viking, clean, grow):
 
     unused_hits = viking.get_unused_hits()
@@ -56,8 +61,6 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
         for ii in range(3):
             vtx[ii] = stats.mean([xx for xx in vtxs[ii]])
 
-    #TODO
-    #split co-linear clusters around vertex 
     if found_vtx:
         for viking in vikings:
             viking.split_colinear_tracks(vtx)
@@ -94,7 +97,7 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
 
     hc_clusters = []
     for ii in range(len(clusters)):
-        if clusters_count[ii] >= 10:
+        if clusters_count[ii] >= 5:
             hc_clusters.append(clusters[ii])
 
 
@@ -128,11 +131,6 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
                     if dist < min_dist:
                         min_dist = dist
                         evt_labels[ii] = evt_labels[jj]
-
-    #TODO: split clusters that are on both sides of vertex
-    #TODO: this is ready for a re-factor/thorough clean up
-    #TODO: once vertexing stuff is in place, seperately study how well it does in some test set
-
 
     n_clusters = -1
     for xx in evt_labels:
@@ -180,7 +178,6 @@ with open(filepath) as csv_file:
     line_count = 0
     n_true_protons = 0
     for row in csv_reader:
-        print('on event:', line_count)
         for ii, xx in enumerate(row):
             if ii == 0:
                 n_true_protons = xx
