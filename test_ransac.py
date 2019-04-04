@@ -38,29 +38,6 @@ def draw_ransack(viking, clean, grow):
 
 def cluster_hits_from_ransack(vikings, ievent, x, y, z):
 
-    #get 3D vertex
-    labels = ['X', 'Y', 'Z']
-    vtxs = [[],[],[]]
-    for viking in vikings:
-        viking.find_vertex_2D()
-        if viking.found_vertex:
-            for ilabel, ll in enumerate(labels):
-                if viking.label[0] == ll:
-                    vtxs[ilabel].append(viking.vertex_2D[0])
-                if viking.label[1] == ll:
-                    vtxs[ilabel].append(viking.vertex_2D[1])
-    vtx = [-555e10 for ii in range(3)]
-    found_vtx = False
-    if len(vtxs[0]) > 0 and len(vtxs[1]) > 0 and len(vtxs[2]) > 0:
-        found_vtx = True
-        for ii in range(3):
-            vtx[ii] = stats.mean([xx for xx in vtxs[ii]])
-
-    #TODO
-    #split co-linear clusters around vertex 
-    if found_vtx:
-        for viking in vikings:
-            viking.split_colinear_tracks(vtx)
 
     cluster_X = np.ndarray((len(x),len(vikings)))
 
@@ -133,12 +110,40 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
     #TODO: this is ready for a re-factor/thorough clean up
     #TODO: once vertexing stuff is in place, seperately study how well it does in some test set
 
+    #get 3D vertex
+    labels = ['X', 'Y', 'Z']
+    vtxs = [[],[],[]]
+    for viking in vikings:
+        viking.find_vertex_2D()
+        if viking.found_vertex:
+            for ilabel, ll in enumerate(labels):
+                if viking.label[0] == ll:
+                    vtxs[ilabel].append(viking.vertex_2D[0])
+                if viking.label[1] == ll:
+                    vtxs[ilabel].append(viking.vertex_2D[1])
+    vtx = [-555e10 for ii in range(3)]
+    found_vtx = False
+    if len(vtxs[0]) > 0 and len(vtxs[1]) > 0 and len(vtxs[2]) > 0:
+        found_vtx = True
+        for ii in range(3):
+            vtx[ii] = stats.mean([xx for xx in vtxs[ii]])
 
     n_clusters = -1
     for xx in evt_labels:
         if xx > n_clusters:
             n_clusters = xx
     n_clusters += 1
+
+    clusters = [[[],[],[]] for ii in range(n_clusters)]
+
+    for ii in range(len(x)):
+        clusters[evt_labels[ii]].append([x[ii], y[ii], z[ii]])
+
+    #TODO:
+    """
+      - for each cluster, fit 3D line
+        - if vertex is near line, separate points along line on either side
+    """
 
     colors = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
 
