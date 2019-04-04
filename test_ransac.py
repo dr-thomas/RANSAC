@@ -36,7 +36,31 @@ def draw_ransack(viking, clean, grow):
         b = track.intercept
         plt.plot([x_draw.min(), x_draw.max()], [a*x_draw.min()+b, a*x_draw.max()+b], color=colors[itrack%6])
 
-def cluster_hits_from_ransack(vikings, viking_labels, ievent, x, y, z):
+def cluster_hits_from_ransack(vikings, ievent, x, y, z):
+
+    #get 3D vertex
+    labels = ['X', 'Y', 'Z']
+    vtxs = [[],[],[]]
+    for viking in vikings:
+        viking.find_vertex_2D()
+        if viking.found_vertex:
+            for ilabel, ll in enumerate(labels):
+                if viking.label[0] == ll:
+                    vtxs[ilabel].append(viking.vertex_2D[0])
+                if viking.label[1] == ll:
+                    vtxs[ilabel].append(viking.vertex_2D[1])
+    vtx = [-555e10 for ii in range(3)]
+    found_vtx = False
+    if len(vtxs[0]) > 0 and len(vtxs[1]) > 0 and len(vtxs[2]) > 0:
+        found_vtx = True
+        for ii in range(3):
+            vtx[ii] = stats.mean([xx for xx in vtxs[ii]])
+
+    #TODO
+    #split co-linear clusters around vertex 
+    if found_vtx:
+        for viking in vikings:
+            viking.split_colinear_tracks(vtx)
 
     cluster_X = np.ndarray((len(x),len(vikings)))
 
@@ -109,23 +133,6 @@ def cluster_hits_from_ransack(vikings, viking_labels, ievent, x, y, z):
     #TODO: this is ready for a re-factor/thorough clean up
     #TODO: once vertexing stuff is in place, seperately study how well it does in some test set
 
-    #get 3D vertex
-    labels = ['X', 'Y', 'Z']
-    vtxs = [[],[],[]]
-    for iviking, viking in enumerate(vikings):
-        viking.find_vertex_2D()
-        if viking.found_vertex:
-            for ilabel, ll in enumerate(labels):
-                if viking_labels[iviking][0] == ll:
-                    vtxs[ilabel].append(viking.vertex_2D[0])
-                if viking_labels[iviking][1] == ll:
-                    vtxs[ilabel].append(viking.vertex_2D[1])
-    vtx = [-555e10 for ii in range(3)]
-    found_vtx = False
-    if len(vtxs[0]) > 0 and len(vtxs[1]) > 0 and len(vtxs[2]) > 0:
-        found_vtx = True
-        for ii in range(3):
-            vtx[ii] = stats.mean([xx for xx in vtxs[ii]])
 
     n_clusters = -1
     for xx in evt_labels:
@@ -173,6 +180,7 @@ with open(filepath) as csv_file:
     line_count = 0
     n_true_protons = 0
     for row in csv_reader:
+        print('on event:', line_count)
         for ii, xx in enumerate(row):
             if ii == 0:
                 n_true_protons = xx
@@ -198,9 +206,8 @@ with open(filepath) as csv_file:
         plt.figure(figsize=(15,15))
 
         vikings = []
-        viking_labels = []
 
-        viking = ransac.viking()
+        viking = ransac.viking('XY')
         viking.set_data(x,y)
         viking.scale_data()
         viking.ransack()
@@ -224,9 +231,8 @@ with open(filepath) as csv_file:
 
 
         vikings.append(viking)
-        viking_labels.append("XY")
 
-        viking = ransac.viking()
+        viking = ransac.viking('ZX')
         viking.set_data(z,x)
         viking.scale_data()
         viking.ransack()
@@ -243,9 +249,8 @@ with open(filepath) as csv_file:
 
 
         vikings.append(viking)
-        viking_labels.append("ZX")
 
-        viking = ransac.viking()
+        viking = ransac.viking('YZ')
         viking.set_data(y,z)
         viking.scale_data()
         viking.ransack()
@@ -259,36 +264,32 @@ with open(filepath) as csv_file:
         draw_ransack(viking,True, True)
 
         vikings.append(viking)
-        viking_labels.append("YZ")
 
-        viking = ransac.viking()
+        viking = ransac.viking('ZY')
         viking.set_data(z,y)
         viking.scale_data()
         viking.ransack()
         viking.clean_tracks()
         viking.grow_tracks()
         vikings.append(viking)
-        viking_labels.append("ZY")
 
-        viking = ransac.viking()
+        viking = ransac.viking('XZ')
         viking.set_data(x,z)
         viking.scale_data()
         viking.ransack()
         viking.clean_tracks()
         viking.grow_tracks()
         vikings.append(viking)
-        viking_labels.append("XZ")
 
-        viking = ransac.viking()
+        viking = ransac.viking('YX')
         viking.set_data(y,x)
         viking.scale_data()
         viking.ransack()
         viking.clean_tracks()
         viking.grow_tracks()
         vikings.append(viking)
-        viking_labels.append("YX")
 
-        cluster_hits_from_ransack(vikings, viking_labels, line_count, x, y, z)
+        cluster_hits_from_ransack(vikings, line_count, x, y, z)
 
         plt.tight_layout()
         plt.subplots_adjust(left=0.06)
@@ -301,4 +302,6 @@ with open(filepath) as csv_file:
         y_data.clear()
         z_data.clear()
         line_count += 1
+        if line_count > 0:
+            exit()
 

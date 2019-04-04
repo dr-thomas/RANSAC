@@ -26,7 +26,7 @@ class ransacked_track:
         self.hit_indecies = []
         for xx in in_hits:
             self.hit_indecies.append(xx)
-        self.slope = slope[0]
+        self.slope = slope
         self.intercept = intercept
         self.compare_n_hits = len(self.hit_indecies)
     def add_track(self, in_track):
@@ -44,10 +44,11 @@ class viking:
     for pillaging events for tracks like clusters
     """
 
-    def __init__(self):
+    def __init__(self, label):
         self.unused_hits = []
         self.n_ransacs = 0
         self.ransacked_tracks = []
+        self.label = label
 
     def set_data(self, X_in, y_in):
         self.X_in = np.ndarray((len(X_in),1))
@@ -95,7 +96,7 @@ class viking:
                 ninlier += 1
         if (len(inlier_mask) - ninlier) < 1:
             #save track hypothesis
-            this_track = ransacked_track(self.hit_indecies, this_ransac.estimator_.coef_, 
+            this_track = ransacked_track(self.hit_indecies, this_ransac.estimator_.coef_[0], 
                     this_ransac.estimator_.intercept_)
             self.ransacked_tracks.append(this_track)
             #set start ransacking again with unused hits
@@ -285,4 +286,40 @@ class viking:
         else:
             self.vertex_2D[0] = vtx_x_mean + self.x_min
             self.vertex_2D[1] = vtx_y_mean + self.y_min
+
+    #TODO: finish this!
+    def split_colinear_tracks(self, vtx):
+        track_indecies_to_delete = []
+        new_tracks = []
+        for itrack, track in enumerate(self.ransacked_tracks):
+            a = track.slope
+            b = track.intercept
+            x = -555e10
+            y = -555e10
+            labels = ['X', 'Y', 'Z']
+            for ilabel, ll in enumerate(labels):
+                if self.label[0] == ll:
+                    x = vtx[ilabel] - self.x_min
+                if self.label[1] == ll:
+                    y = vtx[ilabel] - self.y_min
+            dist = abs(a*x-y+b)/(math.sqrt(a*a+1))
+            if dist < 5.:
+                print("splitting track")
+                #split track about vertex (x,y)
+                #create 2 new tracks, delete old one TODO: use index! TODO: validate
+                track_indecies_to_delete.append(itrack)
+                track1 = ransacked_track([], track.slope, track.intercept)
+                track2 = ransacked_track([], track.slope, track.intercept)
+                for hit in track.hit_indecies:
+                    if self.X_in[hit][0] < x:
+                        track1.add_hit(hit)
+                    else:
+                        track2.add_hit(hit)
+                new_tracks.append(track1)
+                new_tracks.append(track2)
+        track_indecies_to_delete.sort(reverse=True)
+        for del_index in track_indecies_to_delete:
+            del self.ransacked_tracks[int(del_index)]
+        for track in new_tracks:
+            self.ransacked_tracks.append(track)
 
