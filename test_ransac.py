@@ -141,9 +141,14 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
 
     #TODO:
     """
-      - for each cluster, fit 3D line
-        - if vertex is near line, separate points along line on either side
+      - for each cluster:
+        - fit 3D line (want do in multiple views to account for vertical tracks in z? 
+        - project all points and vertex onto line 
+        - separate around vertex
+        - if more than say 5 points are on the other side, tag old cluster for deletion, add new ones
     """
+
+    #TODO: do not split clusters, prevent them from growing across vertex??
 
     colors = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
 
