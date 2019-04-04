@@ -67,7 +67,7 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
     for ii, viking in enumerate(vikings):
         track_indecies = viking.get_track_indecies()
         for jj, index in enumerate(track_indecies):
-            cluster_X[jj][ii] = index[0]
+            cluster_X[jj][ii] = index
 
     clusters = []
     for xx in cluster_X:
@@ -302,6 +302,6 @@ with open(filepath) as csv_file:
         y_data.clear()
         z_data.clear()
         line_count += 1
-        if line_count > 0:
+        if line_count > 2:
             exit()
 

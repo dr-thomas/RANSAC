@@ -212,23 +212,18 @@ class viking:
                 self.ransacked_tracks[int(xx)].add_hit(ii)
 
     def get_track_indecies(self):
-        evt_closest_indecies = []
+        evt_indecies = [-1 for ii in range(len(self.X_in))]
         for ii in range(len(self.X_in)):
-            x = self.X_in[ii][0]
-            y = self.y_in[ii] 
-            min_dist = 555e10
-            min_index = -1
-            evt_dist = [min_index, min_dist]
-            for ii, xx in enumerate(self.ransacked_tracks):
-                a = xx.slope
-                b = xx.intercept
-                dist = abs(a*x-y+b)/(math.sqrt(a*a+1))
-                if dist < min_dist:
-                    min_dist = dist
-                    min_index = ii
-                evt_dist = [min_index, min_dist]
-            evt_closest_indecies.append(evt_dist)
-        return evt_closest_indecies
+            for itrack, track in enumerate(self.ransacked_tracks):
+                found_in_track = False
+                for hit in track.hit_indecies:
+                    if hit == ii:
+                        found_in_track = True
+                        evt_indecies[ii] = itrack
+                        break
+                    if found_in_track:
+                        break
+        return evt_indecies
 
     def find_vertex_2D(self):
         vtxs = []
