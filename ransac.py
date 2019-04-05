@@ -284,7 +284,7 @@ class viking:
                 track1 = ransacked_track([], track.slope, track.intercept)
                 track2 = ransacked_track([], track.slope, track.intercept)
                 for hit in track.hit_indecies:
-                    if self.X_in[hit][0] < x:
+                    if self.X_in[int(hit)][0] < x:
                         track1.add_hit(hit)
                     else:
                         track2.add_hit(hit)
@@ -302,16 +302,40 @@ def cluster_hits(vikings, hit_data):
     y = hit_data[1]
     z = hit_data[2]
 
+    #get 3D vertex
+    labels = ['X', 'Y', 'Z']
+    vtxs = [[],[],[]]
+    for viking in vikings:
+        viking.find_vertex_2D()
+        if viking.found_vertex:
+            for ilabel, ll in enumerate(labels):
+                if viking.label[0] == ll:
+                    vtxs[ilabel].append(viking.vertex_2D[0])
+                if viking.label[1] == ll:
+                    vtxs[ilabel].append(viking.vertex_2D[1])
+    vtx = [-555e10 for ii in range(3)]
+    found_vtx = False
+    if len(vtxs[0]) > 0 and len(vtxs[1]) > 0 and len(vtxs[2]) > 0:
+        found_vtx = True
+        for ii in range(3):
+            vtx[ii] = stats.mean([xx for xx in vtxs[ii]])
+
+    if found_vtx:
+        for viking in vikings:
+            viking.split_colinear_tracks(vtx)
+
     cluster_X = np.ndarray((len(x),len(vikings)))
 
     for ii, viking in enumerate(vikings):
         track_indecies = viking.get_track_indecies()
         for jj, index in enumerate(track_indecies):
-            cluster_X[jj][ii] = index[0]
+            cluster_X[jj][ii] = index
 
     clusters = []
     for xx in cluster_X:
-        cluster = 10000*xx[0] + 100*xx[1] + xx[2]
+        cluster = 0.
+        for jj, yy in enumerate(xx):
+            cluster += 100**float(jj)*yy
         seen_before = False
         for cc in clusters:
             if cc == cluster:
@@ -322,7 +346,9 @@ def cluster_hits(vikings, hit_data):
 
     clusters_count = [0 for ii in range(len(clusters))]
     for xx in cluster_X:
-        cluster = 10000*xx[0] + 100*xx[1] + xx[2]
+        cluster = 0.
+        for jj, yy in enumerate(xx):
+            cluster += 100**float(jj)*yy
         for ii, cc in enumerate(clusters):
             if cluster == cc:
                 clusters_count[ii] += 1
@@ -330,13 +356,15 @@ def cluster_hits(vikings, hit_data):
 
     hc_clusters = []
     for ii in range(len(clusters)):
-        if clusters_count[ii] >= 10:
+        if clusters_count[ii] >= 5:
             hc_clusters.append(clusters[ii])
 
 
     evt_labels = []
     for xx in cluster_X:
-        cluster = 10000*xx[0] + 100*xx[1] + xx[2]
+        cluster = 0.
+        for jj, yy in enumerate(xx):
+            cluster += 100**float(jj)*yy
         was_hc = False
         for ii, cc in enumerate(hc_clusters):
             if cluster == cc:

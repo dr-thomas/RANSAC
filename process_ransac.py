@@ -39,9 +39,11 @@ with open(filepath) as csv_file:
             continue
 
         vikings = []
+        labels = ['X', 'Y', 'Z']
         for ii in range(len(hit_data)):
             for jj in range(len(hit_data)):
-                viking = ransac.viking()
+                label = labels[ii] + labels[jj]
+                viking = ransac.viking(label)
                 viking.set_data(hit_data[ii],hit_data[jj])
                 viking.scale_data()
                 viking.ransack()
@@ -69,6 +71,7 @@ with open(filepath) as csv_file:
         #TODO: don't forget to write truth information back in here or account for it some other way
         #TODO: will need to seperate by evt as well likely for actual use
         #TODO: should re-create file somewhere upstairs to avoid accidental appends to exisiting old files
+        #TODO: carefully validate this after merge
         with open('test.csv', mode='a') as outf:
             out_writer = csv.writer(outf, delimiter=',',)
             for cc in clusters:
