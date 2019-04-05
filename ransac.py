@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn import linear_model
 import math
+import statistics as stats
 
 #General TODO:
 """
@@ -25,7 +26,7 @@ class ransacked_track:
         self.hit_indecies = []
         for xx in in_hits:
             self.hit_indecies.append(xx)
-        self.slope = slope[0]
+        self.slope = slope
         self.intercept = intercept
         self.compare_n_hits = len(self.hit_indecies)
     def add_track(self, in_track):
@@ -43,10 +44,11 @@ class viking:
     for pillaging events for tracks like clusters
     """
 
-    def __init__(self):
+    def __init__(self, label):
         self.unused_hits = []
         self.n_ransacs = 0
         self.ransacked_tracks = []
+        self.label = label
 
     def set_data(self, X_in, y_in):
         self.X_in = np.ndarray((len(X_in),1))
@@ -60,18 +62,18 @@ class viking:
             self.hit_indecies_in[ii] = ii
 
     def scale_data(self):
-        x_min = 555e10
+        self.x_min = 555e10
         for xx in self.X_in:
-            if xx[0] < x_min:
-                x_min = xx[0]
-        y_min = 555e10
+            if xx[0] < self.x_min:
+                self.x_min = xx[0]
+        self.y_min = 555e10
         for xx in self.y_in:
-            if xx < y_min:
-                y_min = xx
+            if xx < self.y_min:
+                self.y_min = xx
         for ii in range(len(self.X_in)):
-            self.X_in[ii][0] = self.X_in[ii][0] - x_min
+            self.X_in[ii][0] = self.X_in[ii][0] - self.x_min
         for ii in range(len(self.y_in)):
-            self.y_in[ii] = self.y_in[ii] - y_min
+            self.y_in[ii] = self.y_in[ii] - self.y_min
 
     def ransack(self):
         if self.n_ransacs == 0:
@@ -94,7 +96,7 @@ class viking:
                 ninlier += 1
         if (len(inlier_mask) - ninlier) < 1:
             #save track hypothesis
-            this_track = ransacked_track(self.hit_indecies, this_ransac.estimator_.coef_, 
+            this_track = ransacked_track(self.hit_indecies, this_ransac.estimator_.coef_[0], 
                     this_ransac.estimator_.intercept_)
             self.ransacked_tracks.append(this_track)
             #set start ransacking again with unused hits
@@ -192,23 +194,107 @@ class viking:
                 self.ransacked_tracks[int(xx)].add_hit(ii)
 
     def get_track_indecies(self):
-        evt_closest_indecies = []
+        evt_indecies = [-1 for ii in range(len(self.X_in))]
         for ii in range(len(self.X_in)):
-            x = self.X_in[ii][0]
-            y = self.y_in[ii] 
-            min_dist = 555e10
-            min_index = -1
-            evt_dist = [min_index, min_dist]
-            for ii, xx in enumerate(self.ransacked_tracks):
-                a = xx.slope
-                b = xx.intercept
-                dist = abs(a*x-y+b)/(math.sqrt(a*a+1))
-                if dist < min_dist:
-                    min_dist = dist
-                    min_index = ii
-                evt_dist = [min_index, min_dist]
-            evt_closest_indecies.append(evt_dist)
-        return evt_closest_indecies
+            for itrack, track in enumerate(self.ransacked_tracks):
+                found_in_track = False
+                for hit in track.hit_indecies:
+                    if hit == ii:
+                        found_in_track = True
+                        evt_indecies[ii] = itrack
+                        break
+                    if found_in_track:
+                        break
+        return evt_indecies
+
+    def find_vertex_2D(self):
+        vtxs = []
+        for ii, track1 in enumerate(self.ransacked_tracks):
+            for jj, track2 in enumerate(self.ransacked_tracks):
+                if ii == jj:
+                    continue
+                m1 = track1.slope
+                b1 = track1.intercept
+                m2 = track2.slope
+                b2 = track2.intercept
+                if abs(m1-m2) < 1e-3:
+                    continue
+                vtx_x = (b2-b1)/(m1-m2)
+                vtx_y = m1*vtx_x+b1
+                vtxs.append([vtx_x,vtx_y,(track1.compare_n_hits + track2.compare_n_hits)])
+        #TODO: only works if data has been scaled (data really should have been scaled by now anyway),
+        #      should check that it has been with a flag or something
+        self.found_vertex = False
+        self.vertex_2D = [-555e10,-555e10]
+
+        if len(vtxs) == 0:
+            return
+        else:
+            self.found_vertex = True
+
+        if len(vtxs) == 1:
+            self.vertex_2D[0] = vtxs[0][0] + self.x_min
+            self.vertex_2D[1] = vtxs[0][1] + self.y_min
+            return
+
+        x_max = 0
+        for xx in self.X_in:
+            if xx[0] > x_max:
+                x_max = xx[0]
+        y_max = 0
+        for xx in self.y_in:
+            if xx > y_max:
+                y_max = xx
+
+        vtx_x_mean = stats.mean([xx[0] for xx in vtxs])
+        vtx_x_std = stats.stdev([xx[0] for xx in vtxs])
+        vtx_y_mean = stats.mean([xx[1] for xx in vtxs])
+        vtx_y_std = stats.stdev([xx[1] for xx in vtxs])
+
+        if vtx_x_std > x_max/4. or vtx_y_std > y_max/4.:
+            n_max = -555e10
+            imax_vtx = -1
+            for ii, vv in enumerate(vtxs):
+                if n_max > vv[2]:
+                    n_max = vv[2]
+                    imax_vtx = ii
+            self.vertex_2D[0] = vtxs[imax_vtx][0] + self.x_min
+            self.vertex_2D[1] = vtxs[imax_vtx][1] + self.y_min
+        else:
+            self.vertex_2D[0] = vtx_x_mean + self.x_min
+            self.vertex_2D[1] = vtx_y_mean + self.y_min
+
+    def split_colinear_tracks(self, vtx):
+        track_indecies_to_delete = []
+        new_tracks = []
+        for itrack, track in enumerate(self.ransacked_tracks):
+            a = track.slope
+            b = track.intercept
+            x = -555e10
+            y = -555e10
+            labels = ['X', 'Y', 'Z']
+            for ilabel, ll in enumerate(labels):
+                if self.label[0] == ll:
+                    x = vtx[ilabel] - self.x_min
+                if self.label[1] == ll:
+                    y = vtx[ilabel] - self.y_min
+            dist = abs(a*x-y+b)/(math.sqrt(a*a+1))
+            if dist < 5.:
+                track_indecies_to_delete.append(itrack)
+                track1 = ransacked_track([], track.slope, track.intercept)
+                track2 = ransacked_track([], track.slope, track.intercept)
+                for hit in track.hit_indecies:
+                    if self.X_in[hit][0] < x:
+                        track1.add_hit(hit)
+                    else:
+                        track2.add_hit(hit)
+                new_tracks.append(track1)
+                new_tracks.append(track2)
+        track_indecies_to_delete.sort(reverse=True)
+        for del_index in track_indecies_to_delete:
+            del self.ransacked_tracks[int(del_index)]
+        for track in new_tracks:
+            self.ransacked_tracks.append(track)
 
 def cluster_hits(vikings, hit_data):
 

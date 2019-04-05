@@ -5,6 +5,7 @@ import ransac
 from sklearn import metrics
 from sklearn.linear_model import LinearRegression
 import statistics as stats
+from numpy import random
 
     #TODO: this is ready for a re-factor/thorough clean up
 
@@ -168,135 +169,108 @@ def cluster_hits_from_ransack(vikings, ievent, x, y, z):
         if found_vtx:
             plt.plot(vtx[1], vtx[2], marker='*', markersize=20, color='gold')
 
-filepath = "./csv/train_0007.csv"
+n_points = 50
 
-x_data = []
-y_data = []
-z_data = []
-with open(filepath) as csv_file:
-    csv_reader = csv.reader(csv_file, delimiter=',')
-    line_count = 0
-    n_true_protons = 0
-    for row in csv_reader:
-        for ii, xx in enumerate(row):
-            if ii == 0:
-                n_true_protons = xx
-            elif ((ii-1)%4) == 0:
-                x_data.append(float(xx))
-            elif ((ii-1)%4) == 1:
-                y_data.append(float(xx))
-            elif ((ii-1)%4) == 2:
-                z_data.append(float(xx))
+x = []
+y = []
+z = []
 
-        x = []
-        y = []
-        z = []
-        for ii in range(len(x_data)):
-            if not (x_data[ii] == 0 and y_data[ii] == 0 and z_data[ii] == 0):
-                x.append(x_data[ii])
-                y.append(y_data[ii])
-                z.append(z_data[ii])
+vtx = [random.rand()*200 for ii in range(3)]
+for ii in range(n_points):
+    x.append(random.rand()*10+vtx[0])
+    y.append(random.rand()*10+vtx[1])
+    z.append(random.rand()*10+vtx[2])
 
-        if len(x) < 5:
-            continue
+plt.figure(figsize=(15,15))
 
-        plt.figure(figsize=(15,15))
+vikings = []
 
-        vikings = []
+viking = ransac.viking('XY')
+viking.set_data(x,y)
+viking.scale_data()
+viking.ransack()
+ax = plt.subplot(331)
+plt.xlabel("X")
+plt.ylabel("Y")
+pad = 5
+plt.annotate("RANSAC", xy=(0, 0.5), xytext=(-ax.yaxis.labelpad - pad, 0),
+        xycoords=ax.yaxis.label, textcoords='offset points',		
+        size='large', ha='right', va='center', rotation=90)
 
-        viking = ransac.viking('XY')
-        viking.set_data(x,y)
-        viking.scale_data()
-        viking.ransack()
-        ax = plt.subplot(331)
-        plt.xlabel("X")
-        plt.ylabel("Y")
-        pad = 5
-        plt.annotate("RANSAC", xy=(0, 0.5), xytext=(-ax.yaxis.labelpad - pad, 0),
-                xycoords=ax.yaxis.label, textcoords='offset points',		
-                size='large', ha='right', va='center', rotation=90)
+draw_ransack(viking,False, False)
+ax = plt.subplot(334)
+plt.xlabel("X")
+plt.ylabel("Y")
+plt.annotate("Clean and Grow", xy=(0, 0.5), xytext=(-ax.yaxis.labelpad - pad, 0),
+        xycoords=ax.yaxis.label, textcoords='offset points',		
+        size='large', ha='right', va='center', rotation=90)
 
-        draw_ransack(viking,False, False)
-        ax = plt.subplot(334)
-        plt.xlabel("X")
-        plt.ylabel("Y")
-        plt.annotate("Clean and Grow", xy=(0, 0.5), xytext=(-ax.yaxis.labelpad - pad, 0),
-                xycoords=ax.yaxis.label, textcoords='offset points',		
-                size='large', ha='right', va='center', rotation=90)
-
-        draw_ransack(viking,True, True)
+draw_ransack(viking,True, True)
 
 
-        vikings.append(viking)
+vikings.append(viking)
 
-        viking = ransac.viking('ZX')
-        viking.set_data(z,x)
-        viking.scale_data()
-        viking.ransack()
-        plt.subplot(332)
-        plt_title_str = str(n_true_protons) + " true protons"
-        plt.title(plt_title_str)
-        plt.xlabel("Z")
-        plt.ylabel("X")
-        draw_ransack(viking,False, False)
-        plt.subplot(335)
-        plt.xlabel("Z")
-        plt.ylabel("X")
-        draw_ransack(viking,True, True)
+viking = ransac.viking('ZX')
+viking.set_data(z,x)
+viking.scale_data()
+viking.ransack()
+plt.subplot(332)
+plt.xlabel("Z")
+plt.ylabel("X")
+draw_ransack(viking,False, False)
+plt.subplot(335)
+plt.xlabel("Z")
+plt.ylabel("X")
+draw_ransack(viking,True, True)
 
 
-        vikings.append(viking)
+vikings.append(viking)
 
-        viking = ransac.viking('YZ')
-        viking.set_data(y,z)
-        viking.scale_data()
-        viking.ransack()
-        plt.subplot(333)
-        plt.xlabel("Y")
-        plt.ylabel("Z")
-        draw_ransack(viking,False, False)
-        plt.subplot(336)
-        plt.xlabel("Y")
-        plt.ylabel("Z")
-        draw_ransack(viking,True, True)
+viking = ransac.viking('YZ')
+viking.set_data(y,z)
+viking.scale_data()
+viking.ransack()
+plt.subplot(333)
+plt.xlabel("Y")
+plt.ylabel("Z")
+draw_ransack(viking,False, False)
+plt.subplot(336)
+plt.xlabel("Y")
+plt.ylabel("Z")
+draw_ransack(viking,True, True)
 
-        vikings.append(viking)
+vikings.append(viking)
 
-        viking = ransac.viking('ZY')
-        viking.set_data(z,y)
-        viking.scale_data()
-        viking.ransack()
-        viking.clean_tracks()
-        viking.grow_tracks()
-        vikings.append(viking)
+viking = ransac.viking('ZY')
+viking.set_data(z,y)
+viking.scale_data()
+viking.ransack()
+viking.clean_tracks()
+viking.grow_tracks()
+vikings.append(viking)
 
-        viking = ransac.viking('XZ')
-        viking.set_data(x,z)
-        viking.scale_data()
-        viking.ransack()
-        viking.clean_tracks()
-        viking.grow_tracks()
-        vikings.append(viking)
+viking = ransac.viking('XZ')
+viking.set_data(x,z)
+viking.scale_data()
+viking.ransack()
+viking.clean_tracks()
+viking.grow_tracks()
+vikings.append(viking)
 
-        viking = ransac.viking('YX')
-        viking.set_data(y,x)
-        viking.scale_data()
-        viking.ransack()
-        viking.clean_tracks()
-        viking.grow_tracks()
-        vikings.append(viking)
+viking = ransac.viking('YX')
+viking.set_data(y,x)
+viking.scale_data()
+viking.ransack()
+viking.clean_tracks()
+viking.grow_tracks()
+vikings.append(viking)
 
-        cluster_hits_from_ransack(vikings, line_count, x, y, z)
+cluster_hits_from_ransack(vikings, 1, x, y, z)
 
-        plt.tight_layout()
-        plt.subplots_adjust(left=0.06)
+plt.tight_layout()
+plt.subplots_adjust(left=0.06)
 
-        print_string = "./png/RANSAC_test_" + str(line_count) + ".png"
-        plt.savefig(print_string)
-        plt.close('all')
-
-        x_data.clear()
-        y_data.clear()
-        z_data.clear()
-        line_count += 1
+print_string = "./png/RANSAC_test_noise.png"
+plt.savefig(print_string)
+plt.close('all')
 
