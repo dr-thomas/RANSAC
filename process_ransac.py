@@ -73,7 +73,7 @@ with open(filepath) as csv_file:
         #TODO: should re-create file somewhere upstairs to avoid accidental appends to exisiting old files
         #TODO: carefully validate this after merge
         with open('test.csv', mode='a') as outf:
-            out_writer = csv.writer(outf, delimiter=',',)
+            out_writer = csv.writer(outf, delimiter=',')
             for cc in clusters:
                 out_writer.writerow(cc)
 
