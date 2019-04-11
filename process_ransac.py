@@ -48,10 +48,20 @@ def cluster(hit_data_in):
         for ii in range(len(xyzs_data)):
             clusters[int(ee)].append(xyzs_data[ii][ievt])
 
+    for ii, xx in enumerate(clusters):
+        origin = [0,0,0]
+        for jj, yy in enumerate(xx): 
+            if jj < 3:
+                origin[jj] = yy
+                clusters[ii][jj] = yy - origin[jj]
+            else:
+                if jj%4 < 3:
+                    clusters[ii][jj] = yy - origin[jj%4]
+
+
     n_features = 1000
     for ii in range(len(clusters)):
         for jj in range(len(clusters[ii]), n_features):
             clusters[ii].append(0)
 
-    #TODO: need to re-sort by x and take another relative postion on these before returning them
     return clusters
